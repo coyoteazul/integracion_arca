@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{future::Future, sync::Arc};
 
 use chrono::NaiveDate;
 use reqwest::{header::CONTENT_TYPE, Client, RequestBuilder};
@@ -8,14 +8,17 @@ use crate::{types::{enums::Webservice, errors::ErrType}, wsaa::get_token::{get_t
 /// Genera el request completamente, incluyendo auth y contenido, pero no lo envia.
 /// De esta forma podes logear el contenido antes de enviarlo
 /// `cert_key_getter` Solo se llama si es necesario renovar el token
-pub async fn generar_request(
+pub async fn generar_request<Fc>(
 	token_map				: Arc<dashmap::DashMap<ServiceId, TokenArca>>,
 	tenant_id				: i64,
 	es_prod					: bool,
 	req_cli					: &Client,
-	cert_key_getter	: fn() -> CertKeyPair,
 	comprobante		 	: &Comprobante,
-) -> Result<(RequestBuilder, String), ErrType> {
+	cert_key_getter	: Fc,
+) -> Result<(RequestBuilder, String), ErrType>
+where 
+	Fc: AsyncFnMut() -> Option<CertKeyPair>,
+{
 	let url = if es_prod {WSFEV1_URL_PROD} else {WSFEV1_URL_HOMO};
 	let key = ServiceId{ tenant_id, webservice: Webservice::Wsfev1 };
 	let auth_xml = get_token(token_map, key, es_prod, req_cli, cert_key_getter, token_parser).await?;

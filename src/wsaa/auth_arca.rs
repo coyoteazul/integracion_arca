@@ -7,8 +7,8 @@ use super::get_token::TokenArca;
 
 pub async fn auth_arca(
 	webservice		: Webservice,
-	cert_contents	: &str,
-	key_contents	: &str,
+	cert_contents	: &Vec<u8>,
+	key_contents	: &Vec<u8>,
 	req_cli				: &Client,
 	es_prod				: bool,
 	cuit					: i64,
