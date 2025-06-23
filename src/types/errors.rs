@@ -1,5 +1,6 @@
 use crate::xml_utils::get_xml_tag;
 
+#[derive(Debug)]
 pub enum ErrType {
 	Soap(SoapFault),
 	Req(reqwest::Error),

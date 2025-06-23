@@ -14,7 +14,7 @@ impl fmt::Display for Webservice {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 			let s = match self {
 					Webservice::Wsaa => "wsaa",
-					Webservice::Wsfev1 => "wsfev1",
+					Webservice::Wsfev1 => "wsfe",
 			};
 			write!(f, "{}", s)
 	}

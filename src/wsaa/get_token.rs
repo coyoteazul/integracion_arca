@@ -1,4 +1,4 @@
-use std::{future::Future, sync::Arc};
+use std::sync::Arc;
 
 use chrono::{DateTime, Duration, Utc};
 use reqwest::Client;
@@ -26,7 +26,7 @@ where
 {
 	if let Some(rf) = token_map.get(&key) {
 		let current_time = dbg!(Utc::now()+Duration::minutes(15));
-		if rf.value().expir < current_time {
+		if rf.value().expir > current_time {
 			return Ok(token_parser(rf.cuit, &rf.token, &rf.sign));
 		}
 	};
@@ -38,7 +38,7 @@ where
 	return Ok(retorno);
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub struct ServiceId {
 	pub(crate) tenant_id: i64,
 	pub(crate) webservice: Webservice,

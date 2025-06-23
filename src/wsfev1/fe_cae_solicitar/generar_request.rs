@@ -1,4 +1,4 @@
-use std::{future::Future, sync::Arc};
+use std::{sync::Arc, time::Duration};
 
 use chrono::NaiveDate;
 use reqwest::{header::CONTENT_TYPE, Client, RequestBuilder};
@@ -27,7 +27,8 @@ where
 
 	let req = req_cli.post(url)
 	.header(CONTENT_TYPE, "application/soap+xml")
-	.body(send_xml.clone());
+	.body(send_xml.clone())
+	.timeout(Duration::from_secs(60));
 
 	return Ok((req, send_xml));
 }
@@ -44,6 +45,7 @@ r#"<ar:Auth>
 
 
 pub struct Comprobante {
+	pub id_factura:i64,
 	pub cabezal: ComprobCabezal,
 	pub cliente: ComprobCliente,
 	pub valores: ComprobValores,
@@ -121,11 +123,17 @@ pub struct ComprobOpcionales {
 
 
 fn xml_make(comp: &Comprobante, auth_xml:String) -> String {
+	const COMP_TIPO_C:[i64;3] = [11,12,13];
 	let ComprobCabezal{ punto_venta, num_documento, tipo_rg1415, concepto, fecha_emision, moneda, cotizacion, cancela_misma_moneda, servicio_desde, servicio_hasta, venci_pago} = &comp.cabezal;
 	let ComprobCliente{ tipo_doc, documento, cond_iva } = comp.cliente;
-	let ComprobValores{ val_total, val_nogravado, val_gravado, val_exento, val_iva, val_otros_trib, tributos, alicuotas_iva } = &comp.valores;
+	let ComprobValores{ val_total, mut val_nogravado, mut val_gravado, val_exento, val_iva, val_otros_trib, tributos, alicuotas_iva } = &comp.valores;
 	let fecha_emision = fecha_emision.format("%Y%m%d").to_string();
 	let cancela_misma_moneda = if *cancela_misma_moneda {'S'} else {'N'};
+
+	if COMP_TIPO_C.contains(tipo_rg1415) {
+		val_gravado = val_nogravado.clone();
+		val_nogravado = 0.0;
+	}
 
 	let fe_cab_ret = format!(
 r#"<ar:FeCabReq>

@@ -1,2 +1,2 @@
 pub mod errors;
-pub mod enums;
+pub(super) mod enums;

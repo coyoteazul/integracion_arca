@@ -30,10 +30,10 @@ pub async fn auth_arca(
 		.header(CONTENT_TYPE, "text/xml")
 		.header("SOAPAction", "")
 		.body(request_xml)
+		.timeout(std::time::Duration::from_secs(60))
 		.send().await?
 		.text().await?;
 
-	dbg!(&response);
 	if response.contains("<faultcode") {
 		if response.contains("ns1:coe.alreadyAuthenticated") {
 			return Err(SoapFault::new(
@@ -54,9 +54,9 @@ pub async fn auth_arca(
 	let sign = get_xml_tag(&response, "sign")
 		.ok_or(SoapFault::new("parseError","No se encontro sign en la respuesta de afip"))?;
 	let expir = NaiveDateTime::parse_from_str(&expir_str,"%Y-%m-%dT%H:%M:%S%.f%:z").unwrap();
-	dbg!(&expir);
+	//dbg!(&expir);
 	let expir = expir.and_local_timezone(tz).unwrap().to_utc();
-	dbg!(&expir);
+	//dbg!(&expir);
 	
 	return Ok(TokenArca{cuit, token, sign, expir});
 }
@@ -79,7 +79,7 @@ fn make_xml(signed_request:&str) -> String {
 fn login_ticket_request_xml(
 	webservice:Webservice,req_date: DateTime<Utc>,exp_date: DateTime<Utc>
 ) -> String {
-	dbg!("Function call");
+
 	let webservice = webservice.to_string();
 	let gen_time = req_date.format("%Y-%m-%dT%H:%M:%S%:z").to_string();
 	let exp_time = exp_date.format("%Y-%m-%dT%H:%M:%S%:z").to_string();
