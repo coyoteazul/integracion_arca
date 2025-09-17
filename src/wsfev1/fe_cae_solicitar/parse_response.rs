@@ -3,15 +3,15 @@ use chrono::{Days, FixedOffset, NaiveDate, Utc};
 use crate::{types::errors::{ErrType, SoapFault}, wsfev1::types::{wsfev1obs::Wsfev1Obs, wsfev1ok::Wsfev1Ok}, xml_utils::{get_xml_tag, get_xml_vec}};
 
 pub fn parse_response(
-	respuesta : String,
+	respuesta : &str,
 ) -> Result<Wsfev1Ok, ErrType> {
 
 	if respuesta.contains("<soap:Fault>"){
-		return Err(SoapFault::from_xml(&respuesta).into());
+		return Err(SoapFault::from_xml(respuesta).into());
 	}
 
 	let mut obs = Vec::<Wsfev1Obs>::new();
-	if let Some(obs_tag) = get_xml_tag(&respuesta, "Observaciones") {
+	if let Some(obs_tag) = get_xml_tag(respuesta, "Observaciones") {
 		for ele in get_xml_vec(&obs_tag, "Obs") {
 			obs.push(Wsfev1Obs{ 
 				code: get_xml_tag(&ele, "Code").unwrap_or("No se encontro Code al buscar observaciones".to_string()), 
@@ -20,7 +20,7 @@ pub fn parse_response(
 		};
 	};
 
-	if let Some(err_tag) = get_xml_tag(&respuesta, "Errors") {
+	if let Some(err_tag) = get_xml_tag(respuesta, "Errors") {
 		for ele in get_xml_vec(&err_tag, "Err") {
 			obs.push(Wsfev1Obs{ 
 				code: get_xml_tag(&ele, "Code").unwrap_or("No se encontro Code al buscar observaciones".to_string()),
@@ -29,16 +29,16 @@ pub fn parse_response(
 		};
 	};
 
-	match get_xml_tag(&respuesta, "Resultado") {
+	match get_xml_tag(respuesta, "Resultado") {
 		None => {
-			dbg!(&respuesta);
+			dbg!(respuesta);
 			return Err(SoapFault::new("", "Estado de transmision desconocido. No se encontro el tag Resultado en la respuesta").into());
 		},
 		Some(estado) => {
 			dbg!(&estado);
 			if estado != "R" {
-				let cae_opt = get_xml_tag(&respuesta, "CAE");
-				let cae_vto_opt = get_xml_tag(&respuesta, "CAEFchVto");
+				let cae_opt = get_xml_tag(respuesta, "CAE");
+				let cae_vto_opt = get_xml_tag(respuesta, "CAEFchVto");
 				
 				match(cae_opt, cae_vto_opt) {
 					(Some(cae), Some(vcto_str)) => {
