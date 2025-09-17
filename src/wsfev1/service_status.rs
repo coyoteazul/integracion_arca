@@ -1,6 +1,6 @@
 use reqwest::{header::CONTENT_TYPE, Client};
 
-use crate::{wsfev1::url::{WSFEV1_URL_HOMO, WSFEV1_URL_PROD}, xml_utils::get_xml_tag};
+use crate::{types::FEDummyResult, wsfev1::url::{WSFEV1_URL_HOMO, WSFEV1_URL_PROD}, xml_utils::get_xml_tag};
 
 /// Consulta el metodo FEDummy para saber si el servicio esta corriendo o no
 pub async fn service_status(req_cli : &Client, es_prod:bool) -> FEDummyResult {
@@ -43,10 +43,3 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 	return retorno;
 }
 
-
-pub struct FEDummyResult {
-	status     : reqwest::StatusCode,
-	app_server : bool,
-	db_server  : bool,
-	auth_server: bool,
-}
