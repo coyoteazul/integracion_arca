@@ -21,7 +21,7 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 </soapenv:Envelope>"#;
 
 	let req = req_cli.post(url)
-	.header(CONTENT_TYPE, "application/soap+xml")
+	.header(CONTENT_TYPE, "text/xml")
 	.body(send_xml)
 	.send().await;
 
