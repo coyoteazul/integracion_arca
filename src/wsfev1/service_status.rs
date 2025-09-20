@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use reqwest::{header::CONTENT_TYPE, Client};
 
 use crate::{types::FEDummyResult, wsfev1::url::{WSFEV1_URL_HOMO, WSFEV1_URL_PROD}, xml_utils::get_xml_tag};
@@ -9,6 +11,7 @@ pub async fn service_status(req_cli : &Client, es_prod:bool) -> FEDummyResult {
 		app_server : false,
 		db_server  : false,
 		auth_server: false,
+		milis_respuesta : 0,
 	};
 
 	let url = if es_prod {WSFEV1_URL_PROD} else {WSFEV1_URL_HOMO};
@@ -20,10 +23,14 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  </soapenv:Body>
 </soapenv:Envelope>"#;
 
+	let start = Instant::now();
 	let req = req_cli.post(url)
 	.header(CONTENT_TYPE, "text/xml")
 	.body(send_xml)
 	.send().await;
+
+	retorno.milis_respuesta = start.elapsed().as_millis();
+	
 
 	match req {
 		Ok(online) => {

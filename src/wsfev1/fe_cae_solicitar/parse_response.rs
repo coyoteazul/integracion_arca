@@ -1,6 +1,6 @@
 use chrono::{Days, FixedOffset, NaiveDate, Utc};
 
-use crate::{types::errors::{ErrType, SoapFault}, wsfev1::types::{wsfev1obs::Wsfev1Obs, wsfev1ok::Wsfev1Ok}, xml_utils::{get_xml_tag, get_xml_vec}};
+use crate::{types::errors::{ErrType, SoapFault}, wsfev1::fe_cae_solicitar::types::{Wsfev1Obs, Wsfev1Ok}, xml_utils::{get_xml_tag, get_xml_vec}};
 
 pub fn parse_response(
 	respuesta : &str,
