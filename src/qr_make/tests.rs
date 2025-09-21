@@ -2,7 +2,7 @@
 mod tests {
 	use std::path::PathBuf;
 
-use chrono::{NaiveDate, Utc};
+use chrono::Utc;
 
   use crate::qr_make::func::{qr_make_base64, qr_make_file, FacJson};
 

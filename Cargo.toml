@@ -15,6 +15,7 @@ serde_json       = { version = "1.0.140", default-features = false, optional= fa
 
 [dev-dependencies]
 dotenvy = "0.15.7"
+tokio   = { version = "1.47.1" , default-features = false, features = ["macros", "rt-multi-thread"] }
 
 
 [features]
@@ -26,6 +27,17 @@ wsfev1_url              = []
 wsfev1_dummy            = ["wsfev1_url","dummy_type","dep:reqwest"]
 wsfev1_fe_cae_solicitar = ["wsfev1_url","wsaa", "dep:reqwest","dep:chrono","dep:dashmap"]
 
+wsfexv1_url             = []
+wsfexv1_dummy           = ["wsfexv1_url","dummy_type","dep:reqwest"]
+
+wsmtxca_url             = []
+wsmtxca_dummy           = ["wsmtxca_url","dummy_type","dep:reqwest"]
+
+wscpe_url               = []
+wscpe_dummy             = ["wscpe_url","dummy_type","dep:reqwest"]
+
+wslpg_url               = []
+wslpg_dummy             = ["wslpg_url","dummy_type","dep:reqwest"]
 
 wsfev1 = [
 	"wsfev1_dummy", 

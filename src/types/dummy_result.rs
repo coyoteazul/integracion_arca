@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct FEDummyResult {
 	pub status          : reqwest::StatusCode,
 	pub app_server      : bool,

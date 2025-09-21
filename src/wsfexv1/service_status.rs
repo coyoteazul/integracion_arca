@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use reqwest::{header::CONTENT_TYPE, Client};
 
-use crate::{types::FEDummyResult, wsfev1::url::{WSFEV1_URL_HOMO, WSFEV1_URL_PROD}, xml_utils::get_xml_tag};
+use crate::{types::FEDummyResult, wsfexv1::url::{WSFEXV1_URL_HOMO, WSFEXV1_URL_PROD}, xml_utils::get_xml_tag};
 
 /// Consulta el metodo FEDummy para saber si el servicio esta corriendo o no
 pub async fn service_status(req_cli : &Client, es_prod:bool) -> FEDummyResult {
@@ -14,12 +14,12 @@ pub async fn service_status(req_cli : &Client, es_prod:bool) -> FEDummyResult {
 		milis_respuesta : 0,
 	};
 
-	let url = if es_prod {WSFEV1_URL_PROD} else {WSFEV1_URL_HOMO};
+	let url = if es_prod {WSFEXV1_URL_PROD} else {WSFEXV1_URL_HOMO};
 	
 	let send_xml = 
 r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Body>
-  <tns:FEDummy xmlns:tns="http://ar.gov.afip.dif.FEV1/"/>
+  <tns:FEXDummy xmlns:tns="http://ar.gov.afip.dif.fexv1/"></tns:FEXDummy>
  </soapenv:Body>
 </soapenv:Envelope>"#;
 
