@@ -1,11 +1,11 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use reqwest::{header::CONTENT_TYPE, Client};
 
 use crate::{types::FEDummyResult, wsfev1::url::{WSFEV1_URL_HOMO, WSFEV1_URL_PROD}, xml_utils::get_xml_tag};
 
 /// Consulta el metodo FEDummy para saber si el servicio esta corriendo o no
-pub async fn service_status(req_cli : &Client, es_prod:bool) -> FEDummyResult {
+pub async fn service_status(req_cli : &Client, es_prod:bool, timeout:Option<Duration>) -> FEDummyResult {
 	let mut retorno = FEDummyResult {
 		status     : reqwest::StatusCode::BAD_REQUEST,
 		app_server : false,
@@ -27,6 +27,7 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 	let req = req_cli.post(url)
 	.header(CONTENT_TYPE, "text/xml")
 	.body(send_xml)
+	.timeout(timeout.unwrap_or(Duration::from_secs(30)))
 	.send().await;
 
 	retorno.milis_respuesta = start.elapsed().as_millis();

@@ -1,11 +1,11 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use reqwest::{header::CONTENT_TYPE, Client};
 
 use crate::{types::FEDummyResult, wslpg::url::{WSLPG_URL_HOMO, WSLPG_URL_PROD}, xml_utils::get_xml_tag};
 
 /// Consulta el metodo FEDummy para saber si el servicio esta corriendo o no
-pub async fn service_status(req_cli : &Client, es_prod:bool) -> FEDummyResult {
+pub async fn service_status(req_cli : &Client, es_prod:bool, timeout:Option<Duration>) -> FEDummyResult {
 	let mut retorno = FEDummyResult {
 		status     : reqwest::StatusCode::BAD_REQUEST,
 		app_server : false,
@@ -27,6 +27,7 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 	.header(CONTENT_TYPE, "text/xml")
 	.header("SOAPAction", "http://serviciosjava.afip.gob.ar/wslpg/dummy")
 	.body(send_xml)
+	.timeout(timeout.unwrap_or(Duration::from_secs(30)))
 	.send().await;
 
 	retorno.milis_respuesta = start.elapsed().as_millis();
@@ -42,7 +43,10 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 		},
 		Err(er) => {
 			match er.status() {
-				Some(status) => {retorno.status = status},
+				Some(status) => {
+					retorno.status = status
+					
+				},
 				None => {
 					if er.is_connect() {
 						dbg!(&er);
@@ -71,6 +75,6 @@ mod tests {
 	#[tokio::test]
 	async fn status() {
 		let cli = reqwest::Client::new();
-		super::service_status(&cli, true).await;
+		super::service_status(&cli, true, None).await;
 	}
 }
