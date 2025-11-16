@@ -43,7 +43,7 @@ r#"<ar:Auth>
 }
 
 
-
+#[derive(Debug)]
 pub struct Comprobante {
 	pub id_factura:i64,
 	pub cabezal: ComprobCabezal,
@@ -56,6 +56,7 @@ pub struct Comprobante {
 	pub actividades				: Option<Vec<String>>,
 }
 
+#[derive(Debug)]
 pub struct ComprobCabezal {
 	pub punto_venta 				: i64,
 	pub num_documento				: i64,
@@ -71,12 +72,14 @@ pub struct ComprobCabezal {
 	pub venci_pago		 			: Option<NaiveDate>,
 }
 
+#[derive(Debug)]
 pub struct ComprobCliente {
 	pub tipo_doc 	: i64,
 	pub documento	: i64,
 	pub cond_iva 	: i64,
 }
 
+#[derive(Debug)]
 pub struct ComprobValores {
 	pub val_total			: f64,
 	pub val_nogravado	: f64,
@@ -88,14 +91,15 @@ pub struct ComprobValores {
 	pub alicuotas_iva	: Option<Vec<ComprobIVA>>,
 }
 
+#[derive(Debug)]
 pub struct ComprobAsoc {
 	pub punto_venta 	: i64,
 	pub num_documento	: i64,
 	pub tipo_rg1415 	: i64,
 	pub fecha_emision : NaiveDate,
-	pub cuit_cliente	: i64,
 }
 
+#[derive(Debug)]
 pub struct ComprobTributos {
 	pub id_tributo: i64,
 	pub desc 			: String,
@@ -104,17 +108,20 @@ pub struct ComprobTributos {
 	pub importe 	: f64
 }
 
+#[derive(Debug)]
 pub struct ComprobIVA {
 	pub id_alicuota : i64,
 	pub base 				: f64,
 	pub importe		 	: f64,
 }
 
+#[derive(Debug)]
 pub struct ComprobPeriodo {
 	pub fecha_desde : NaiveDate,
 	pub fecha_hasta : NaiveDate,
 }
 
+#[derive(Debug)]
 pub struct ComprobOpcionales {
 	pub id 		: String,
 	pub valor : String,
@@ -226,14 +233,14 @@ fn cbte_asoc_xml(com:&Option<Vec<ComprobAsoc>>) -> String {
 		if asoc.len() > 0 {
 			let ar = asoc.iter()
 			.map(|f|{
-				let ComprobAsoc { punto_venta, num_documento, tipo_rg1415, fecha_emision, cuit_cliente } = &f;
+				let ComprobAsoc { punto_venta, num_documento, tipo_rg1415, fecha_emision} = &f;
 				let fecha_emision = fecha_emision.format("%Y%m%d").to_string();
 				format!(
-r#"<ar:CbteAsoc>
+r#"
+<ar:CbteAsoc>
 	<ar:Tipo>{tipo_rg1415}</ar:Tipo>
 	<ar:PtoVta>{punto_venta}</ar:PtoVta>
 	<ar:Nro>{num_documento}</ar:Nro>
-	<ar:Cuit>{cuit_cliente}</ar:Cuit>
 	<ar:CbteFch>{fecha_emision}</ar:CbteFch>
 </ar:CbteAsoc>"#)
 			})
@@ -241,7 +248,7 @@ r#"<ar:CbteAsoc>
 				acc + &val
 			}).unwrap();
 
-			return format!(r#"<ar:CbteAsoc>{ar}</ar:CbtesAsoc>"#)
+			return format!(r#"<ar:CbtesAsoc>{ar}</ar:CbtesAsoc>"#)
 		}	
 	};
 

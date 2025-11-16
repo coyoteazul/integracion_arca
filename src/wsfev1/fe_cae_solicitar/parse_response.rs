@@ -1,9 +1,11 @@
 use chrono::{Days, FixedOffset, NaiveDate, Utc};
+use reqwest::StatusCode;
 
 use crate::{types::errors::{ErrType, SoapFault}, wsfev1::fe_cae_solicitar::types::{Wsfev1Obs, Wsfev1Ok}, xml_utils::{get_xml_tag, get_xml_vec}};
 
 pub fn parse_response(
 	respuesta : &str,
+	status    : StatusCode,
 ) -> Result<Wsfev1Ok, ErrType> {
 
 	if respuesta.contains("<soap:Fault>"){
@@ -32,7 +34,7 @@ pub fn parse_response(
 	match get_xml_tag(respuesta, "Resultado") {
 		None => {
 			dbg!(respuesta);
-			return Err(SoapFault::new("", "Estado de transmision desconocido. No se encontro el tag Resultado en la respuesta").into());
+			return Err(SoapFault::new("", format!("Estado de transmision desconocido (status:{status}). No se encontro el tag Resultado en la respuesta").as_str()).into());
 		},
 		Some(estado) => {
 			dbg!(&estado);
@@ -60,18 +62,20 @@ pub fn parse_response(
 						};
 					},
 					_ => {
-						return Err(SoapFault::new("", "La factura fue aprobada pero no se encontro el CAE o su fecha de vencimiento").into());
+						return Err(SoapFault::new("", "El documento fue aprobado pero no se encontro el CAE o su fecha de vencimiento").into());
 					}
 				}
 			} else {
 				if obs.len() > 0 {
+
 					if let Some(er) =  obs.iter().find(|x| x.code=="10016") {
 						return Err(SoapFault::new(&er.code, &er.msg).into());
 					} else {
 						return Err(SoapFault::new(&obs[0].code, &obs[0].msg).into());
 					}
 				} else {
-					return Err(SoapFault::new("###", "La factura fue rechazada, pero no sabemos por que").into());
+					dbg!(&respuesta);
+					return Err(SoapFault::new("###", "El documento fue rechazado, pero no sabemos por que").into());
 				}
 			}
 		},
