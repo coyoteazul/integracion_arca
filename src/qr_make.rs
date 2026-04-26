@@ -1,4 +1,4 @@
 mod func;
 mod tests;
 
-pub use func::{FacJson,qr_make_base64,qr_make_file};
+pub use func::{FacJson,qr_make_base64,qr_make_file,qr_make_url};

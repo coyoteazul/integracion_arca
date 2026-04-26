@@ -1,4 +1,4 @@
-use chrono::{Days, FixedOffset, NaiveDate, Utc};
+use chrono::{Days, NaiveDate, Utc};
 use reqwest::StatusCode;
 
 use crate::{types::errors::{ErrType, SoapFault}, wsfev1::fe_cae_solicitar::types::{Wsfev1Obs, Wsfev1Ok}, xml_utils::{get_xml_tag, get_xml_vec}};
@@ -44,19 +44,15 @@ pub fn parse_response(
 				
 				match(cae_opt, cae_vto_opt) {
 					(Some(cae), Some(vcto_str)) => {
-						let tz = FixedOffset::west_opt(3600*3).unwrap();
+						
 						match NaiveDate::parse_from_str(&vcto_str, "%Y%m%d") {
 								Ok(vcto) => {
-									let vcto = vcto
-									.and_hms_micro_opt(0, 0, 0, 0).unwrap()
-									.and_local_timezone(tz).unwrap().to_utc();
-
 									return Ok(Wsfev1Ok{cae, vcto, obs});
 								},
 								Err(err) => {
 									dbg!("No se pudo parsear bien la fecha. Se asume que es 10 dias mayor a hoy");
 									dbg!(err);
-									let vcto = Utc::now().checked_add_days(Days::new(10)).unwrap();
+									let vcto = Utc::now().checked_add_days(Days::new(10)).unwrap().date_naive();
 									return Ok(Wsfev1Ok{cae, vcto, obs});
 								},
 						};

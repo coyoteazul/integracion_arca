@@ -9,9 +9,7 @@ const QR_ARCA_URL:&str = "https://www.arca.gob.ar/fe/qr/?p=";
 
 pub fn qr_make_file(json:&FacJson, to_file_path:PathBuf){
 	let mut path = PathBuf::from(to_file_path);
-	let json = serde_json::to_string(json).unwrap();
-	let base64 = general_purpose::STANDARD.encode(json);
-	let qr_str = dbg!(format!("{QR_ARCA_URL}{base64}"));
+	let qr_str = qr_make_url(json);
 	let size = 200;
 	path.set_extension("svg");
 	dbg!(qrcode_generator::to_svg_to_file(&qr_str,
@@ -27,10 +25,15 @@ pub fn qr_make_file(json:&FacJson, to_file_path:PathBuf){
 		&path).unwrap();*/
 }
 
-pub fn qr_make_base64(json:&FacJson) -> String {
+pub fn qr_make_url(json:&FacJson) -> String {
 	let json = serde_json::to_string(json).unwrap();
 	let base64 = general_purpose::STANDARD.encode(json);
-	let qr_str = dbg!(format!("{QR_ARCA_URL}{base64}"));
+ 	
+	dbg!(format!("{QR_ARCA_URL}{base64}"))
+}
+
+pub fn qr_make_base64(json:&FacJson) -> String {
+	let qr_str = qr_make_url(json);
 	//400 funciona bien para el pos de mercadopago. Deja suficiente papel de sobra despues del QR, sin exagerar
 	let size = 400;
 

@@ -14,5 +14,5 @@ pub mod qr_make;
 
 #[cfg(feature = "wsaa")]
 mod wsaa;
-#[cfg(feature = "wsaa")]
 pub use wsaa::get_token::{ServiceId, TokenArca, CertKeyPair};
+pub use wsaa::validate_crt::*;

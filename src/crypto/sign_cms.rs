@@ -17,8 +17,18 @@ pub fn sign_cms(
 	let key_contents = fs::read_to_string(key_path).unwrap();*/
 
 	let cert = X509::from_pem(cert_contents)
+		.inspect_err(|err| {tracing::error!({
+				certif = ?cert_contents,
+				err    = ?err,
+				"No se pudo leer el certificado como X509", 
+		})})
 		.expect("No se pudo leer el certificado como X509");
 	let key  = PKey::private_key_from_pem(key_contents)
+		.inspect_err(|err| {tracing::error!({
+				key    = ?key_contents,
+				err    = ?err,
+				"No se pudo leer la key como PKey", 
+		})})
 		.expect("No se pudo leer la key como PKey");
 
 	let flags = CMSOptions::empty();
