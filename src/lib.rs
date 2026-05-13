@@ -8,6 +8,7 @@ pub mod wsfexv1;
 pub mod wsmtxca;
 pub mod wscpe;
 pub mod wslpg;
+pub mod wsbfev1;
 
 #[cfg(feature = "qr_make")]
 pub mod qr_make;

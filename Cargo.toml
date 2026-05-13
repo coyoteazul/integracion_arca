@@ -40,6 +40,9 @@ wscpe_dummy             = ["wscpe_url","dummy_type","dep:reqwest"]
 wslpg_url               = []
 wslpg_dummy             = ["wslpg_url","dummy_type","dep:reqwest"]
 
+wsbfev1_url               = []
+wsbfev1_dummy             = ["wsbfev1_url","dummy_type","dep:reqwest"]
+
 wsfev1 = [
 	"wsfev1_dummy", 
 	"wsfev1_fe_cae_solicitar"
