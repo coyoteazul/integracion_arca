@@ -39,9 +39,9 @@ r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" x
 			retorno.status = online.status();
 
 			let txt = online.text().await.unwrap();
-			retorno.app_server  = get_xml_tag(&txt, "appserver" ).map(|x| x.to_uppercase().trim() == "OK").unwrap_or(false);
-			retorno.db_server   = get_xml_tag(&txt, "dbserver"  ).map(|x| x.to_uppercase().trim() == "OK").unwrap_or(false);
-			retorno.auth_server = get_xml_tag(&txt, "authserver").map(|x| x.to_uppercase().trim() == "OK").unwrap_or(false);
+			retorno.app_server  = get_xml_tag(&txt, "AppServer" ).map(|x| x.to_uppercase().trim() == "OK").unwrap_or(false);
+			retorno.db_server   = get_xml_tag(&txt, "DbServer"  ).map(|x| x.to_uppercase().trim() == "OK").unwrap_or(false);
+			retorno.auth_server = get_xml_tag(&txt, "AuthServer").map(|x| x.to_uppercase().trim() == "OK").unwrap_or(false);
 		},
 		Err(er) => {
 			match er.status() {
