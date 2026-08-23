@@ -1,8 +1,7 @@
+use chrono::{DateTime, NaiveDateTime, Utc};
+use openssl::nid::Nid;
 use openssl::pkey::PKey;
 use openssl::{pkey::Private, x509::X509};
-use openssl::nid::Nid;
-use chrono::{DateTime, Utc, NaiveDateTime};
-
 
 #[derive(Debug)]
 pub struct CertInfo {
@@ -21,13 +20,13 @@ pub enum CertError {
     MultipleCN,
     InvalidCN,
     InvalidDate,
-		InvalidPrivateKey,
+    InvalidPrivateKey,
     KeyMismatch,
 }
 
 impl CertError {
-	pub fn to_string(&self) -> String {
-		match self {
+    pub fn to_string(&self) -> String {
+        match self {
 				CertError::InvalidPem          => "Certificado Invalido".to_string(),
 				CertError::MissingSerialNumber => "No se encontro el CUIT".to_string(),
 				CertError::InvalidIdentidad    => "El certificado no pertenece a esta empresa".to_string(),
@@ -38,7 +37,7 @@ impl CertError {
 				CertError::InvalidPrivateKey   => "No se pudo leer la llave privada del certificado".to_string(),
 				CertError::KeyMismatch         => "La llave privada no coincide con el certificado".to_string(),
 		}
-	}
+    }
 }
 
 pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &str) -> CertInfo {
@@ -59,16 +58,17 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
         }
     };
 
-		// -------------------------
+    // -------------------------
     // Parse private key
     // -------------------------
-    let private_key: Option<PKey<Private>> = match PKey::private_key_from_pem(private_key_pem.as_bytes()) {
-        Ok(k) => Some(k),
-        Err(_) => {
-            errors.push(CertError::InvalidPrivateKey);
-            None
-        }
-    };
+    let private_key: Option<PKey<Private>> =
+        match PKey::private_key_from_pem(private_key_pem.as_bytes()) {
+            Ok(k) => Some(k),
+            Err(_) => {
+                errors.push(CertError::InvalidPrivateKey);
+                None
+            }
+        };
 
     // -------------------------
     // Validate key matches cert
@@ -84,7 +84,6 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
         }
     }
 
-
     // -------------------------
     // Subject: serialNumber (CUIT)
     // -------------------------
@@ -92,7 +91,7 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
 
     let serials: Vec<String> = subject
         .entries_by_nid(Nid::SERIALNUMBER)
-        .filter_map(|e| e.data().as_utf8().ok().map(|s| s.to_string()))
+        .filter_map(|e| e.data().to_string().ok().map(|s| s.to_string()))
         .collect();
 
     let subject_serial = serials.get(0).cloned();
@@ -114,7 +113,7 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
 
     let cns: Vec<String> = issuer
         .entries_by_nid(Nid::COMMONNAME)
-        .filter_map(|e| e.data().as_utf8().ok().map(|s| s.to_string()))
+        .filter_map(|e| e.data().to_string().ok().map(|s| s.to_string()))
         .collect();
 
     let issuer_cn = cns.get(0).cloned();
@@ -141,10 +140,7 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
     let cert_venci = {
         let not_after = cert.not_after().to_string();
 
-        match NaiveDateTime::parse_from_str(
-            &not_after,
-            "%b %e %H:%M:%S %Y GMT"
-        ) {
+        match NaiveDateTime::parse_from_str(&not_after, "%b %e %H:%M:%S %Y GMT") {
             Ok(naive) => Some(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)),
             Err(_) => {
                 errors.push(CertError::InvalidDate);
