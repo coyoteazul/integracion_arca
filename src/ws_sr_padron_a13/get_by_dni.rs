@@ -1,13 +1,19 @@
 use std::{sync::Arc, time::Duration};
 
 use futures::future;
-use reqwest::{Client, header::{ACCEPT_CHARSET, CONTENT_TYPE}};
+use reqwest::{
+    Client,
+    header::{ACCEPT_CHARSET, CONTENT_TYPE},
+};
 
 use crate::{
-    types::{enums::Webservice, errors::{ErrType, SoapFault}}, ws_sr_padron_a13::{
-        get_by_cuit::get_persona_v2,
-        types::{PersonaCuitRetorno},
-    }, wsaa::get_token::{CertKeyPair, ServiceId, TokenArca, get_token}, xml_utils::get_xml_vec,
+    types::{
+        enums::Webservice,
+        errors::{ErrType, SoapFault},
+    },
+    ws_sr_padron_a13::{get_by_cuit::get_persona_v2, types::PersonaCuitRetorno},
+    wsaa::get_token::{CertKeyPair, ServiceId, TokenArca, get_token},
+    xml_utils::get_xml_vec,
 };
 
 use super::url::{WS_SR_PADRON_A13_URL_HOMO, WS_SR_PADRON_A13_URL_PROD};
@@ -49,22 +55,23 @@ where
     let req = req_cli
         .post(url)
         .header(CONTENT_TYPE, "application/soap+xml; charset=utf-8") //Hay que aclarar el charset porque arca miente y manda windows-1252 diciendo que es utf-8
-				.header(ACCEPT_CHARSET, "utf-8")
+        .header(ACCEPT_CHARSET, "utf-8")
         .body(send_xml.clone())
         .timeout(Duration::from_secs(60));
 
     let res = req.send().await?;
 
     let text = res.text().await?;
-		dbg!(&text);
+    dbg!(&text);
 
-		if text.contains("<soap:Fault>") {
+    if text.contains("<soap:Fault>") {
         return Err(SoapFault::from_xml(&text).into());
     }
 
-		let list = get_xml_vec(&text, "idPersona")
-			.into_iter().filter_map(|x| x.parse::<i64>().ok())
-			.collect::<Vec<_>>();
+    let list = get_xml_vec(&text, "idPersona")
+        .into_iter()
+        .filter_map(|x| x.parse::<i64>().ok())
+        .collect::<Vec<_>>();
 
     let futures = list
         .into_iter()

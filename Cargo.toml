@@ -48,6 +48,6 @@ wsbfev1_dummy           = ["wsbfev1","dummy_type","dep:reqwest"]
 
 ws-sr-padron-a13            = []
 ws-sr-padron-a13_dummy      = ["ws-sr-padron-a13","dep:reqwest","dummy_type"]
-ws-sr-padron-a13_get_by_cuit= ["ws-sr-padron-a13","dep:reqwest"]
+ws-sr-padron-a13_get_by_cuit= ["ws-sr-padron-a13","dep:reqwest","wsaa"]
 ws-sr-padron-a13_get_by_dni = ["ws-sr-padron-a13","dep:reqwest","ws-sr-padron-a13_get_by_cuit"]
 

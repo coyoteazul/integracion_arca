@@ -1,4 +1,7 @@
-use std::{fs, sync::{Arc, OnceLock}};
+use std::{
+    fs,
+    sync::{Arc, OnceLock},
+};
 
 use crate::{CertKeyPair, ServiceId, TokenArca};
 
@@ -11,9 +14,13 @@ pub fn test_token_map() -> Arc<dashmap::DashMap<ServiceId, TokenArca>> {
 }
 
 pub async fn test_cert_key_getter() -> Option<CertKeyPair> {
-	let cert_contents: Vec<u8> = fs::read("cert_test.pem").expect("error on handling cert file");
-	let key_contents: Vec<u8> = fs::read("key_test.key").expect("error on handling key file");
-	let cuit: i64 = 20398305923;
+    let cert_contents: Vec<u8> = fs::read("cert_test.pem").expect("error on handling cert file");
+    let key_contents: Vec<u8> = fs::read("key_test.key").expect("error on handling key file");
+    let cuit: i64 = 20398305923;
 
-	Some(CertKeyPair { cuit, cert_contents, key_contents })
+    Some(CertKeyPair {
+        cuit,
+        cert_contents,
+        key_contents,
+    })
 }

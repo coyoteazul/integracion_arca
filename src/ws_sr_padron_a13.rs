@@ -1,5 +1,5 @@
-mod url;
 pub mod types;
+mod url;
 
 #[cfg(feature = "ws-sr-padron-a13_get_by_dni")]
 pub mod get_by_dni;

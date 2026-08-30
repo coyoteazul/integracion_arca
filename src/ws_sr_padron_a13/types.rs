@@ -51,7 +51,7 @@ pub(crate) struct PersonaParse {
     #[serde(rename = "descripcionActividadPrincipal")]
     pub descripcion_actividad_principal: Option<String>,
 
-		#[serde(rename = "domicilio", default)]
+    #[serde(rename = "domicilio", default)]
     pub domicilio: Vec<DomicilioParse>,
 
     #[serde(rename = "claveInactivaAsociada", default)]
@@ -261,7 +261,9 @@ impl From<DomicilioParse> for Domicilio {
                 codigo_postal: value.codigo_postal,
             },
 
-            localidad: value.localidad.unwrap_or_else(|| value.descripcion_provincia.clone()),
+            localidad: value
+                .localidad
+                .unwrap_or_else(|| value.descripcion_provincia.clone()),
 
             provincia: Provincia {
                 id_provincia: value.id_provincia,
@@ -320,9 +322,8 @@ impl From<&str> for TipoDomicilio {
     }
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct PersonaCuitRetorno {
-	pub parsed:Persona,
-	pub answer_xml:String,
+    pub parsed: Persona,
+    pub answer_xml: String,
 }

@@ -5,7 +5,7 @@ pub enum ErrType {
     Soap(SoapFault),
     Req(reqwest::Error),
     Serde(serde_json::Error),
-		String(String),
+    String(String),
 }
 
 impl From<SoapFault> for ErrType {

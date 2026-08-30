@@ -1,7 +1,10 @@
 use std::{sync::Arc, time::Duration};
 
 use chrono::NaiveDate;
-use reqwest::{Client, RequestBuilder, header::{ACCEPT_CHARSET, CONTENT_TYPE}};
+use reqwest::{
+    Client, RequestBuilder,
+    header::{ACCEPT_CHARSET, CONTENT_TYPE},
+};
 
 use crate::{
     types::{enums::Webservice, errors::ErrType},
@@ -47,7 +50,7 @@ where
     let req = req_cli
         .post(url)
         .header(CONTENT_TYPE, "application/soap+xml; charset=utf-8") //Hay que aclarar el charset porque arca miente y manda windows-1252 diciendo que es utf-8
-				.header(ACCEPT_CHARSET, "utf-8")
+        .header(ACCEPT_CHARSET, "utf-8")
         .body(send_xml.clone())
         .timeout(Duration::from_secs(60));
 
