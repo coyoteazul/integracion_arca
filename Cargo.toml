@@ -15,15 +15,16 @@ quick-xml = { version = "0.42.0", features = ["serialize", "tokio"] }
 reqwest          = { version = "0.13.4", default-features = false, optional = true, features = ["rustls"] }
 serde            = { version = "1.0.229", default-features = false, optional= false, features = ["derive"] }
 serde_json       = { version = "1.0.151", default-features = false, optional= false, features = ["std"] }
-tracing          = { version = "0.1.44" , default-features = false }
+tracing          = { version = "0.1.44", default-features = false, features = ["attributes"] }
 
 [dev-dependencies]
 dotenvy = "0.15.7"
 tokio   = { version = "1.53.1" , default-features = false, features = ["macros", "rt-multi-thread"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 
 [features]
-wsaa                    = ["dep:openssl"]
+wsaa                    = ["dep:openssl", "dep:chrono", "dep:dashmap"]
 dummy_type              = []
 qr_make                 = ["dep:qrcode-generator","dep:base64"]
 

@@ -2,6 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use openssl::nid::Nid;
 use openssl::pkey::PKey;
 use openssl::{pkey::Private, x509::X509};
+use tracing::{debug, info, warn};
 
 #[derive(Debug)]
 pub struct CertInfo {
@@ -49,6 +50,7 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
     let cert = match X509::from_pem(cert_pem.as_bytes()) {
         Ok(c) => c,
         Err(_) => {
+            warn!(cuit, "El certificado provisto no es un PEM valido");
             return CertInfo {
                 cert_venci: None,
                 issuer_cn: None,
@@ -65,6 +67,7 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
         match PKey::private_key_from_pem(private_key_pem.as_bytes()) {
             Ok(k) => Some(k),
             Err(_) => {
+                warn!(cuit, "La llave privada provista no es un PEM valido");
                 errors.push(CertError::InvalidPrivateKey);
                 None
             }
@@ -77,10 +80,17 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
         match cert.public_key() {
             Ok(cert_pub) => {
                 if !pk.public_eq(&cert_pub) {
+                    warn!(cuit, "La llave privada no coincide con el certificado");
                     errors.push(CertError::KeyMismatch);
                 }
             }
-            Err(_) => errors.push(CertError::KeyMismatch),
+            Err(_) => {
+                warn!(
+                    cuit,
+                    "No se pudo leer la clave publica del certificado para comparar"
+                );
+                errors.push(CertError::KeyMismatch)
+            }
         }
     }
 
@@ -97,11 +107,13 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
     let subject_serial = serials.get(0).cloned();
 
     if serials.is_empty() {
+        warn!(cuit, "No se encontro serialNumber (CUIT) en el certificado");
         errors.push(CertError::MissingSerialNumber);
     } else {
         let val = &serials[0];
 
         if !val.contains(cuit.to_string().as_str()) {
+            warn!(cuit, subject_serial = %val, "El CUIT del certificado no coincide con el esperado");
             errors.push(CertError::InvalidIdentidad);
         }
     }
@@ -119,7 +131,10 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
     let issuer_cn = cns.get(0).cloned();
 
     match cns.len() {
-        0 => errors.push(CertError::MissingCN),
+        0 => {
+            warn!(cuit, "No se encontro CN en el emisor del certificado");
+            errors.push(CertError::MissingCN)
+        }
         1 => {
             let expected = if es_prod {
                 "Computadores"
@@ -128,10 +143,18 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
             };
 
             if cns[0].trim() != expected {
+                warn!(cuit, issuer_cn = %cns[0], expected, "El emisor del certificado no es el esperado");
                 errors.push(CertError::InvalidCN);
             }
         }
-        _ => errors.push(CertError::MultipleCN),
+        _ => {
+            warn!(
+                cuit,
+                cantidad = cns.len(),
+                "El certificado posee mas de un CN de emisor"
+            );
+            errors.push(CertError::MultipleCN)
+        }
     }
 
     // -------------------------
@@ -143,11 +166,22 @@ pub fn inspect_cert(cert_pem: &str, es_prod: bool, cuit: i64, private_key_pem: &
         match NaiveDateTime::parse_from_str(&not_after, "%b %e %H:%M:%S %Y GMT") {
             Ok(naive) => Some(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)),
             Err(_) => {
+                warn!(cuit, not_after = %not_after, "No se pudo parsear la fecha de vencimiento del certificado");
                 errors.push(CertError::InvalidDate);
                 None
             }
         }
     };
+
+    if errors.is_empty() {
+        info!(cuit, cert_venci = ?cert_venci, "Certificado validado correctamente");
+    } else {
+        debug!(
+            cuit,
+            cantidad_errores = errors.len(),
+            "Certificado invalido, se encontraron errores"
+        );
+    }
 
     CertInfo {
         cert_venci,

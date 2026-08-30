@@ -5,6 +5,7 @@ use reqwest::{
     Client, RequestBuilder,
     header::{ACCEPT_CHARSET, CONTENT_TYPE},
 };
+use tracing::{debug, error, info};
 
 use crate::{
     types::{enums::Webservice, errors::ErrType},
@@ -26,6 +27,14 @@ pub async fn generar_request<Fc>(
 where
     Fc: AsyncFnMut() -> Option<CertKeyPair>,
 {
+    info!(
+        id_factura = comprobante.id_factura,
+        punto_venta = comprobante.cabezal.punto_venta,
+        tenant_id,
+        es_prod,
+        "Generando request FECAESolicitar"
+    );
+
     let url = if es_prod {
         WSFEV1_URL_PROD
     } else {
@@ -43,9 +52,23 @@ where
         cert_key_getter,
         token_parser,
     )
-    .await?;
+    .await
+    .inspect_err(|e| {
+        error!(
+            id_factura = comprobante.id_factura,
+            tenant_id,
+            error = ?e,
+            "Error obteniendo token para wsfev1"
+        )
+    })?;
 
     let send_xml = xml_make(comprobante, auth_xml);
+    // No se loguea el XML completo porque incluye el Token/Sign de autenticacion.
+    debug!(
+        id_factura = comprobante.id_factura,
+        xml_len = send_xml.len(),
+        "Request XML de FECAESolicitar generado"
+    );
 
     let req = req_cli
         .post(url)

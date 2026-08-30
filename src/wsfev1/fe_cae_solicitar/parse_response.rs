@@ -1,5 +1,6 @@
 use chrono::{Days, NaiveDate, Utc};
 use reqwest::StatusCode;
+use tracing::{debug, error, warn};
 
 use crate::{
     types::errors::{ErrType, SoapFault},
@@ -9,6 +10,7 @@ use crate::{
 
 pub fn parse_response(respuesta: &str, status: StatusCode) -> Result<Wsfev1Ok, ErrType> {
     if respuesta.contains("<soap:Fault>") {
+        error!(respuesta = %respuesta, "FECAESolicitar devolvio un SOAP Fault");
         return Err(SoapFault::from_xml(respuesta).into());
     }
 
@@ -35,13 +37,17 @@ pub fn parse_response(respuesta: &str, status: StatusCode) -> Result<Wsfev1Ok, E
         }
     };
 
+    if !obs.is_empty() {
+        warn!(?obs, "Observaciones/Errores encontrados en la respuesta");
+    }
+
     match get_xml_tag(respuesta, "Resultado") {
         None => {
-            dbg!(respuesta);
+            error!(respuesta = %respuesta, %status, "No se encontro el tag Resultado en la respuesta");
             return Err(SoapFault::new("", format!("Estado de transmision desconocido (status:{status}). No se encontro el tag Resultado en la respuesta").as_str()).into());
         }
         Some(estado) => {
-            dbg!(&estado);
+            debug!(estado = %estado, "Resultado de FECAESolicitar");
             if estado != "R" {
                 let cae_opt = get_xml_tag(respuesta, "CAE");
                 let cae_vto_opt = get_xml_tag(respuesta, "CAEFchVto");
@@ -50,13 +56,15 @@ pub fn parse_response(respuesta: &str, status: StatusCode) -> Result<Wsfev1Ok, E
                     (Some(cae), Some(vcto_str)) => {
                         match NaiveDate::parse_from_str(&vcto_str, "%Y%m%d") {
                             Ok(vcto) => {
+                                debug!(cae = %cae, vcto = %vcto, "CAE obtenido correctamente");
                                 return Ok(Wsfev1Ok { cae, vcto, obs });
                             }
                             Err(err) => {
-                                dbg!(
-                                    "No se pudo parsear bien la fecha. Se asume que es 10 dias mayor a hoy"
+                                warn!(
+                                    error = ?err,
+                                    vcto_str = %vcto_str,
+                                    "No se pudo parsear la fecha de vencimiento del CAE. Se asume que es 10 dias mayor a hoy"
                                 );
-                                dbg!(err);
                                 let vcto = Utc::now()
                                     .checked_add_days(Days::new(10))
                                     .unwrap()
@@ -66,18 +74,20 @@ pub fn parse_response(respuesta: &str, status: StatusCode) -> Result<Wsfev1Ok, E
                         };
                     }
                     _ => {
+                        error!(respuesta = %respuesta, "El documento fue aprobado pero no se encontro el CAE o su fecha de vencimiento");
                         return Err(SoapFault::new("", "El documento fue aprobado pero no se encontro el CAE o su fecha de vencimiento").into());
                     }
                 }
             } else {
                 if obs.len() > 0 {
+                    warn!(?obs, "Documento rechazado por ARCA");
                     if let Some(er) = obs.iter().find(|x| x.code == "10016") {
                         return Err(SoapFault::new(&er.code, &er.msg).into());
                     } else {
                         return Err(SoapFault::new(&obs[0].code, &obs[0].msg).into());
                     }
                 } else {
-                    dbg!(&respuesta);
+                    error!(respuesta = %respuesta, "El documento fue rechazado, pero no sabemos por que");
                     return Err(SoapFault::new(
                         "###",
                         "El documento fue rechazado, pero no sabemos por que",

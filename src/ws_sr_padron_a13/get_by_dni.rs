@@ -5,6 +5,7 @@ use reqwest::{
     Client,
     header::{ACCEPT_CHARSET, CONTENT_TYPE},
 };
+use tracing::{debug, error, info};
 
 use crate::{
     types::{
@@ -31,6 +32,11 @@ pub async fn get_by_dni<Fc>(
 where
     Fc: AsyncFnMut() -> Option<CertKeyPair>,
 {
+    info!(
+        dni,
+        tenant_id, es_prod, "Consultando getIdPersonaListByDocumento por DNI"
+    );
+
     let url = if es_prod {
         WS_SR_PADRON_A13_URL_PROD
     } else {
@@ -48,7 +54,8 @@ where
         cert_key_getter,
         token_parser,
     )
-    .await?;
+    .await
+    .inspect_err(|e| error!(dni, tenant_id, error = ?e, "Error obteniendo token para getIdPersonaListByDocumento"))?;
 
     let send_xml = xml_make(dni, &auth_xml);
 
@@ -59,12 +66,18 @@ where
         .body(send_xml.clone())
         .timeout(Duration::from_secs(60));
 
-    let res = req.send().await?;
+    let res = req.send().await.inspect_err(
+        |e| error!(dni, error = ?e, "Error de red al llamar a getIdPersonaListByDocumento"),
+    )?;
 
-    let text = res.text().await?;
-    dbg!(&text);
+    let text = res
+        .text()
+        .await
+        .inspect_err(|e| error!(dni, error = ?e, "Error leyendo el cuerpo de la respuesta de getIdPersonaListByDocumento"))?;
+    debug!(dni, respuesta = %text, "Respuesta de getIdPersonaListByDocumento");
 
     if text.contains("<soap:Fault>") {
+        error!(dni, "getIdPersonaListByDocumento devolvio un SOAP Fault");
         return Err(SoapFault::from_xml(&text).into());
     }
 
@@ -73,11 +86,15 @@ where
         .filter_map(|x| x.parse::<i64>().ok())
         .collect::<Vec<_>>();
 
+    info!(dni, ?list, "CUIT/CUIL encontrados para el DNI");
+
     let futures = list
         .into_iter()
         .map(|cuit| get_persona_v2(url, req_cli, cuit, &auth_xml));
 
-    future::try_join_all(futures).await
+    future::try_join_all(futures).await.inspect_err(
+        |e| error!(dni, error = ?e, "Error consultando getPersonaV2 para alguno de los CUIT/CUIL"),
+    )
 }
 
 fn token_parser(cuit: i64, token: &str, sign: &str) -> String {

@@ -1,4 +1,4 @@
-#[cfg(feature = "qr_make")]
+#[cfg(feature = "wsaa")]
 mod crypto;
 
 pub mod types;

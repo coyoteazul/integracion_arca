@@ -4,6 +4,7 @@ use reqwest::{
     Client,
     header::{ACCEPT_CHARSET, CONTENT_TYPE},
 };
+use tracing::{debug, error, info};
 
 use crate::{
     types::{
@@ -29,6 +30,11 @@ pub async fn get_by_cuit<Fc>(
 where
     Fc: AsyncFnMut() -> Option<CertKeyPair>,
 {
+    info!(
+        cuit,
+        tenant_id, es_prod, "Consultando getPersonaV2 por CUIT"
+    );
+
     let url = if es_prod {
         WS_SR_PADRON_A13_URL_PROD
     } else {
@@ -46,7 +52,10 @@ where
         cert_key_getter,
         token_parser,
     )
-    .await?;
+    .await
+    .inspect_err(
+        |e| error!(cuit, tenant_id, error = ?e, "Error obteniendo token para getPersonaV2"),
+    )?;
 
     get_persona_v2(url, req_cli, cuit, &auth_xml).await
 }
@@ -67,24 +76,36 @@ pub(crate) async fn get_persona_v2(
         .body(send_xml.clone())
         .timeout(Duration::from_secs(60));
 
-    let res = req.send().await?;
+    let res = req
+        .send()
+        .await
+        .inspect_err(|e| error!(cuit, error = ?e, "Error de red al llamar a getPersonaV2"))?;
 
-    let answer_xml = res.text().await?;
+    let answer_xml = res.text().await.inspect_err(
+        |e| error!(cuit, error = ?e, "Error leyendo el cuerpo de la respuesta de getPersonaV2"),
+    )?;
 
     if answer_xml.contains("<soap:Fault>") {
+        error!(cuit, respuesta = %answer_xml, "getPersonaV2 devolvio un SOAP Fault");
         return Err(SoapFault::from_xml(&answer_xml).into());
     }
-    let xml_recortado =
-        get_xml_tag(&answer_xml, "persona").ok_or("No se encontro el tag 'persona'".to_owned())?;
+    let xml_recortado = get_xml_tag(&answer_xml, "persona").ok_or_else(|| {
+        error!(cuit, respuesta = %answer_xml, "No se encontro el tag 'persona' en la respuesta");
+        "No se encontro el tag 'persona'".to_owned()
+    })?;
     let xml_recortado = format!("<persona>{xml_recortado}</persona>");
-    dbg!(&xml_recortado);
+    debug!(cuit, xml_recortado = %xml_recortado, "XML de persona recortado");
 
     match quick_xml::de::from_str::<PersonaParse>(&xml_recortado) {
         Ok(persona) => {
             let parsed: Persona = persona.into();
+            info!(cuit, "Persona obtenida correctamente via getPersonaV2");
             Ok(PersonaCuitRetorno { parsed, answer_xml })
         }
-        Err(err) => Err(err.to_string().into()),
+        Err(err) => {
+            error!(cuit, error = ?err, xml_recortado = %xml_recortado, "Error parseando la respuesta de getPersonaV2");
+            Err(err.to_string().into())
+        }
     }
 }
 

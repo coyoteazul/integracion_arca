@@ -1,10 +1,13 @@
+use tracing::debug;
+
 use crate::{
-    tests::{test_cert_key_getter, test_token_map},
-    ws_sr_padron_a13::{get_by_cuit::get_by_cuit, get_by_dni::get_by_dni},
+    tests::{init_tracing, test_cert_key_getter, test_token_map}, ws_sr_padron_a13::{get_by_cuit::get_by_cuit, get_by_dni::get_by_dni},
 };
 
 #[tokio::test]
 async fn test_get_by_dni() {
+		init_tracing();
+
     let token_map = test_token_map();
     let tenant_id = 1;
     let es_prod = true;
@@ -23,8 +26,8 @@ async fn test_get_by_dni() {
     .await
     .unwrap();
 
-    dbg!(&res);
-    assert!(res.len() == 2);
+    debug!(?res);
+    assert_eq!(res.len(), 2);
 
     assert!(
         res.first()
@@ -41,6 +44,8 @@ async fn test_get_by_dni() {
 
 #[tokio::test]
 async fn test_get_by_cuit() {
+		init_tracing();
+
     let token_map = test_token_map();
     let tenant_id = 1;
     let es_prod = true;
@@ -59,7 +64,7 @@ async fn test_get_by_cuit() {
     .await
     .unwrap();
 
-    dbg!(&res);
+    debug!(?res);
     assert!(
         res.parsed
             .nombre

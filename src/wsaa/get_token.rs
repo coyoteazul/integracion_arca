@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Duration, Utc};
 use reqwest::Client;
+use tracing::{debug, error, info, warn};
 
 use crate::{
     types::{
@@ -29,20 +30,46 @@ where
     Fc: AsyncFnMut() -> Option<CertKeyPair>,
 {
     if let Some(rf) = token_map.get(&key) {
-        let current_time = dbg!(Utc::now() + Duration::minutes(15));
+        let current_time = Utc::now() + Duration::minutes(15);
+        debug!(
+            tenant_id = key.tenant_id,
+            webservice = ?key.webservice,
+            expir = %rf.value().expir,
+            "Token encontrado en cache, chequeando expiracion"
+        );
         if rf.value().expir > current_time {
+            debug!(
+                tenant_id = key.tenant_id,
+                webservice = ?key.webservice,
+                "Reutilizando token de cache, todavia vigente"
+            );
             return Ok(token_parser(rf.cuit, &rf.token, &rf.sign));
         }
+        warn!(
+            tenant_id = key.tenant_id,
+            webservice = ?key.webservice,
+            "Token de cache vencido o por vencer, se renovara"
+        );
     };
+
+    info!(
+        tenant_id = key.tenant_id,
+        webservice = ?key.webservice,
+        "Renovando token de autenticacion"
+    );
 
     let CertKeyPair {
         cuit,
         cert_contents,
         key_contents,
-    } = cert_key_getter().await.ok_or(SoapFault::new(
-        "db",
-        "No se encontro el par de Certificado y Key",
-    ))?;
+    } = cert_key_getter().await.ok_or_else(|| {
+        error!(
+            tenant_id = key.tenant_id,
+            webservice = ?key.webservice,
+            "No se encontro el par de Certificado y Key"
+        );
+        SoapFault::new("db", "No se encontro el par de Certificado y Key")
+    })?;
     let value = auth_arca(
         key.webservice,
         &cert_contents,
@@ -51,9 +78,24 @@ where
         es_prod,
         cuit,
     )
-    .await?;
+    .await
+    .inspect_err(|e| {
+        error!(
+            tenant_id = key.tenant_id,
+            webservice = ?key.webservice,
+            cuit,
+            error = ?e,
+            "Error renovando el token de autenticacion"
+        )
+    })?;
     let retorno = token_parser(cuit, &value.token, &value.sign);
     token_map.insert(key, value);
+    info!(
+        tenant_id = key.tenant_id,
+        webservice = ?key.webservice,
+        cuit,
+        "Token renovado y guardado en cache"
+    );
     return Ok(retorno);
 }
 
