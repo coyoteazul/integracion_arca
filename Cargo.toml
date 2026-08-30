@@ -7,9 +7,12 @@ edition = "2024"
 base64           = { version = "0.22.1" , default-features = false, optional= true }
 chrono           = { version = "0.4.45" , default-features = false, optional= true , features = ["serde", "now"] }
 dashmap          = { version = "6.2.1"  , default-features = false, optional= true }
+encoding_rs = "0.8.35"
+futures = "0.3.34"
 openssl          = { version = "0.10.81", default-features = false, optional= true , features = ["vendored"] }
 qrcode-generator = { version = "5.0.0"  , default-features = false, optional= true , features = ["image"] }
-reqwest          = { version = "0.13.4" , default-features = false, optional= true , features = [] }
+quick-xml = { version = "0.42.0", features = ["serialize", "tokio"] }
+reqwest          = { version = "0.13.4", default-features = false, optional = true, features = ["rustls"] }
 serde            = { version = "1.0.229", default-features = false, optional= false, features = ["derive"] }
 serde_json       = { version = "1.0.151", default-features = false, optional= false, features = ["std"] }
 tracing          = { version = "0.1.44" , default-features = false }
@@ -24,26 +27,27 @@ wsaa                    = ["dep:openssl"]
 dummy_type              = []
 qr_make                 = ["dep:qrcode-generator","dep:base64"]
 
-wsfev1_url              = []
-wsfev1_dummy            = ["wsfev1_url","dummy_type","dep:reqwest"]
-wsfev1_fe_cae_solicitar = ["wsfev1_url","wsaa", "dep:reqwest","dep:chrono","dep:dashmap"]
+wsfev1                  = []
+wsfev1_dummy            = ["wsfev1","dummy_type","dep:reqwest"]
+wsfev1_fe_cae_solicitar = ["wsfev1","wsaa", "dep:reqwest","dep:chrono","dep:dashmap"]
 
-wsfexv1_url             = []
-wsfexv1_dummy           = ["wsfexv1_url","dummy_type","dep:reqwest"]
+wsfexv1                 = []
+wsfexv1_dummy           = ["wsfexv1","dummy_type","dep:reqwest"]
 
-wsmtxca_url             = []
-wsmtxca_dummy           = ["wsmtxca_url","dummy_type","dep:reqwest"]
+wsmtxca                 = []
+wsmtxca_dummy           = ["wsmtxca","dummy_type","dep:reqwest"]
 
-wscpe_url               = []
-wscpe_dummy             = ["wscpe_url","dummy_type","dep:reqwest"]
+wscpe                   = []
+wscpe_dummy             = ["wscpe","dummy_type","dep:reqwest"]
 
-wslpg_url               = []
-wslpg_dummy             = ["wslpg_url","dummy_type","dep:reqwest"]
+wslpg                   = []
+wslpg_dummy             = ["wslpg","dummy_type","dep:reqwest"]
 
-wsbfev1_url             = []
-wsbfev1_dummy           = ["wsbfev1_url","dummy_type","dep:reqwest"]
+wsbfev1                 = []
+wsbfev1_dummy           = ["wsbfev1","dummy_type","dep:reqwest"]
 
-wsfev1 = [
-	"wsfev1_dummy", 
-	"wsfev1_fe_cae_solicitar"
-]
+ws-sr-padron-a13            = []
+ws-sr-padron-a13_dummy      = ["ws-sr-padron-a13","dep:reqwest","dummy_type"]
+ws-sr-padron-a13_get_by_cuit= ["ws-sr-padron-a13","dep:reqwest"]
+ws-sr-padron-a13_get_by_dni = ["ws-sr-padron-a13","dep:reqwest","ws-sr-padron-a13_get_by_cuit"]
+

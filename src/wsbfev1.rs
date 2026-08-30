@@ -1,4 +1,3 @@
-#[cfg(feature = "wsbfev1_url")]
 mod url;
 
 #[cfg(feature = "wsbfev1_dummy")]

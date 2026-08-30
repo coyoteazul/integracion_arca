@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, Utc};
+use chrono::{Duration, FixedOffset, NaiveDateTime, Utc};
 use reqwest::{Client, header::CONTENT_TYPE};
 
 use crate::{
@@ -23,10 +23,7 @@ pub async fn auth_arca(
 ) -> Result<TokenArca, ErrType> {
     let url = if es_prod { URL_PROD } else { URL_HOMO };
 
-    let tz: FixedOffset = FixedOffset::west_opt(3600 * 3).unwrap();
-    let req_date = Utc::now() - Duration::minutes(5);
-    let exp_date = req_date + Duration::hours(23);
-    let login_ticket = login_ticket_request_xml(webservice, req_date, exp_date);
+    let login_ticket = login_ticket_request_xml(webservice);
 
     let signed_ticket = sign_cms(cert_contents, key_contents, login_ticket.as_str());
     let request_xml = make_xml(&signed_ticket);
@@ -68,6 +65,7 @@ pub async fn auth_arca(
     ))?;
     let expir = NaiveDateTime::parse_from_str(&expir_str, "%Y-%m-%dT%H:%M:%S%.f%:z").unwrap();
     //dbg!(&expir);
+    let tz: FixedOffset = FixedOffset::west_opt(3600 * 3).unwrap();
     let expir = expir.and_local_timezone(tz).unwrap().to_utc();
     //dbg!(&expir);
 
@@ -82,21 +80,20 @@ pub async fn auth_arca(
 fn make_xml(signed_request: &str) -> String {
     return format!(
         r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsaa="http://wsaa.view.sua.dvadac.desein.afip.gov">
-			<soapenv:Header/>
-			<soapenv:Body>
-					<wsaa:loginCms>
-						<wsaa:in0>{signed_request}</wsaa:in0>
-					</wsaa:loginCms>
-			</soapenv:Body>
-		</soapenv:Envelope>"#
+	<soapenv:Header/>
+	<soapenv:Body>
+			<wsaa:loginCms>
+				<wsaa:in0>{signed_request}</wsaa:in0>
+			</wsaa:loginCms>
+	</soapenv:Body>
+</soapenv:Envelope>"#
     );
 }
 
-fn login_ticket_request_xml(
-    webservice: Webservice,
-    req_date: DateTime<Utc>,
-    exp_date: DateTime<Utc>,
-) -> String {
+fn login_ticket_request_xml(webservice: Webservice) -> String {
+    let req_date = Utc::now() - Duration::minutes(5);
+    let exp_date = req_date + Duration::hours(23);
+
     let webservice = webservice.to_string();
     let gen_time = req_date.format("%Y-%m-%dT%H:%M:%S%:z").to_string();
     let exp_time = exp_date.format("%Y-%m-%dT%H:%M:%S%:z").to_string();
@@ -104,13 +101,13 @@ fn login_ticket_request_xml(
 
     let login_ticket_request_xml = format!(
         r#"<loginTicketRequest version="1.0">
-		<header>
-			<uniqueId>{uniqueid}</uniqueId>
-			<generationTime>{gen_time}</generationTime>
-			<expirationTime>{exp_time}</expirationTime>
-		</header>
-		<service>{webservice}</service>
-	</loginTicketRequest>"#
+	<header>
+		<uniqueId>{uniqueid}</uniqueId>
+		<generationTime>{gen_time}</generationTime>
+		<expirationTime>{exp_time}</expirationTime>
+	</header>
+	<service>{webservice}</service>
+</loginTicketRequest>"#
     );
     return login_ticket_request_xml;
 }

@@ -1,4 +1,3 @@
-#[cfg(feature = "wsfev1_url")]
 mod url;
 
 #[cfg(feature = "wsfev1_fe_cae_solicitar")]

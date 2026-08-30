@@ -1,4 +1,3 @@
-#[cfg(feature = "wsmtxca_url")]
 mod url;
 
 #[cfg(feature = "wsmtxca_dummy")]

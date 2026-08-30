@@ -1,0 +1,109 @@
+use std::{sync::Arc, time::Duration};
+
+use encoding_rs::WINDOWS_1252;
+use reqwest::{Client, header::{ACCEPT_CHARSET, CONTENT_TYPE}};
+
+use crate::{
+    types::{
+        enums::Webservice,
+        errors::{ErrType, SoapFault},
+    },
+    ws_sr_padron_a13::types::{Persona, PersonaCuitRetorno, PersonaParse},
+    wsaa::get_token::{CertKeyPair, ServiceId, TokenArca, get_token},
+    xml_utils::get_xml_tag,
+};
+
+use super::url::{WS_SR_PADRON_A13_URL_HOMO, WS_SR_PADRON_A13_URL_PROD};
+
+/// Consulta el metodo getPersonaV2
+pub async fn get_by_cuit<Fc>(
+    token_map: Arc<dashmap::DashMap<ServiceId, TokenArca>>,
+    tenant_id: i64,
+    es_prod: bool,
+    req_cli: &Client,
+    cuit: i64,
+    cert_key_getter: Fc,
+) -> Result<PersonaCuitRetorno, ErrType>
+where
+    Fc: AsyncFnMut() -> Option<CertKeyPair>,
+{
+    let url = if es_prod {
+        WS_SR_PADRON_A13_URL_PROD
+    } else {
+        WS_SR_PADRON_A13_URL_HOMO
+    };
+    let key = ServiceId {
+        tenant_id,
+        webservice: Webservice::WsSrPadronA13,
+    };
+    let auth_xml = get_token(
+        token_map,
+        key,
+        es_prod,
+        req_cli,
+        cert_key_getter,
+        token_parser,
+    )
+    .await?;
+
+    get_persona_v2(url, req_cli, cuit, &auth_xml).await
+}
+
+/// Metodo interno para llamar a getPersonaV2 sin recalcular tokens
+pub(crate) async fn get_persona_v2(
+    url: &str,
+    req_cli: &Client,
+    cuit: i64,
+    auth_xml: &str,
+) -> Result<PersonaCuitRetorno, ErrType> {
+    let send_xml = xml_make(cuit, auth_xml.to_string());
+
+    let req = req_cli
+        .post(url)
+        .header(CONTENT_TYPE, "application/soap+xml; charset=utf-8") //Hay que aclarar el charset porque arca miente y manda windows-1252 diciendo que es utf-8
+				.header(ACCEPT_CHARSET, "utf-8")
+        .body(send_xml.clone())
+        .timeout(Duration::from_secs(60));
+
+    let res = req.send().await?;
+
+    let answer_xml = res.text().await?;
+
+    if answer_xml.contains("<soap:Fault>") {
+        return Err(SoapFault::from_xml(&answer_xml).into());
+    }
+    let xml_recortado =
+        get_xml_tag(&answer_xml, "persona").ok_or("No se encontro el tag 'persona'".to_owned())?;
+    let xml_recortado = format!("<persona>{xml_recortado}</persona>");
+    dbg!(&xml_recortado);
+
+    match quick_xml::de::from_str::<PersonaParse>(&xml_recortado) {
+        Ok(persona) => {
+            let parsed: Persona = persona.into();
+            Ok(PersonaCuitRetorno { parsed, answer_xml })
+        }
+        Err(err) => Err(err.to_string().into()),
+    }
+}
+
+fn token_parser(cuit: i64, token: &str, sign: &str) -> String {
+    format!(
+        r#"<token>{token}</token>
+         <sign>{sign}</sign>
+         <cuitRepresentada>{cuit}</cuitRepresentada>"#
+    )
+}
+
+fn xml_make(cuit: i64, auth_xml: String) -> String {
+    format!(
+        r#"<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a13="http://a13.soap.ws.server.puc.sr/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <a13:getPersonaV2>
+         {auth_xml}
+         <idPersona>{cuit}</idPersona>
+      </a13:getPersonaV2>
+   </soapenv:Body>
+</soapenv:Envelope>"#
+    )
+}

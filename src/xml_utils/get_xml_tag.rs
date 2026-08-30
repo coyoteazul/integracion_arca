@@ -1,11 +1,6 @@
 ///Obtiene un unico tag del XML
 pub fn get_xml_tag(xml: &str, tag: &str) -> Option<String> {
-    let result = get_xml_vec(xml, tag);
-    if result.len() == 0 {
-        return None;
-    } else {
-        return Some(result[0].clone());
-    }
+    get_xml_vec(xml, tag).into_iter().next()
 }
 
 ///Busca un tag dentro del XML y devuelve todos los elementos de ese tag como Vec
@@ -17,10 +12,10 @@ pub fn get_xml_vec(xml: &str, tag: &str) -> Vec<String> {
         end_tag = format!("&lt;/{tag}&gt;");
     }
 
-    let slice = String::from(xml)
+    let slice = xml
         .split(&start_tag)
         .skip(1)
-        .map(|x| x.split(&end_tag).nth(0).unwrap().to_owned())
+        .filter_map(|x| x.split_once(&end_tag).map(|(value, _)| value.to_owned()))
         .collect();
 
     //dbg!(&xml, &start_tag, &end_tag, &slice);

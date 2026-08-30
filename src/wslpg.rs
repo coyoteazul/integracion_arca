@@ -1,4 +1,3 @@
-#[cfg(feature = "wslpg_url")]
 mod url;
 
 #[cfg(feature = "wslpg_dummy")]

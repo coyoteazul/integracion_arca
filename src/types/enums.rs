@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub enum Webservice {
     Wsaa,
     Wsfev1,
+		WsSrPadronA13
 }
 
 impl fmt::Display for Webservice {
@@ -14,6 +15,7 @@ impl fmt::Display for Webservice {
         let s = match self {
             Webservice::Wsaa => "wsaa",
             Webservice::Wsfev1 => "wsfe",
+						Webservice::WsSrPadronA13 => "ws_sr_padron_a13",
         };
         write!(f, "{}", s)
     }
