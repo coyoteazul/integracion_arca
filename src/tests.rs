@@ -1,5 +1,6 @@
 use std::{
-    fs, sync::{Arc, Once, OnceLock},
+    fs,
+    sync::{Arc, Once, OnceLock},
 };
 
 use crate::{CertKeyPair, ServiceId, TokenArca};
@@ -24,7 +25,7 @@ pub async fn test_cert_key_getter() -> Option<CertKeyPair> {
         key_contents,
     })
 }
- 
+
 /// Inicializa un subscriber de tracing que escribe hacia el test writer de libtest,
 /// asi los logs aparecen intercalados con el test que los genero sin necesitar `--nocapture`.
 /// Protegido con `Once` porque cada #[tokio::test] corre en su propio hilo y llamarlo

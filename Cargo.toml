@@ -7,15 +7,16 @@ edition = "2024"
 base64           = { version = "0.22.1" , default-features = false, optional= true }
 chrono           = { version = "0.4.45" , default-features = false, optional= true , features = ["serde", "now"] }
 dashmap          = { version = "6.2.1"  , default-features = false, optional= true }
-encoding_rs = "0.8.35"
+encoding_rs      = { version = "0.8.35", optional = false} 
 futures = "0.3.34"
 openssl          = { version = "0.10.81", default-features = false, optional= true , features = ["vendored"] }
 qrcode-generator = { version = "5.0.0"  , default-features = false, optional= true , features = ["image"] }
-quick-xml = { version = "0.42.0", features = ["serialize", "tokio"] }
+quick-xml        = { version = "0.42.0", features = ["serialize", "tokio"] }
 reqwest          = { version = "0.13.4", default-features = false, optional = true, features = ["rustls"] }
 serde            = { version = "1.0.229", default-features = false, optional= false, features = ["derive"] }
 serde_json       = { version = "1.0.151", default-features = false, optional= false, features = ["std"] }
 tracing          = { version = "0.1.44", default-features = false, features = ["attributes"] }
+utoipa           = { version = "5.5.0", optional = true, features = ["chrono"] }
 
 [dev-dependencies]
 dotenvy = "0.15.7"
@@ -23,14 +24,17 @@ tokio   = { version = "1.53.1" , default-features = false, features = ["macros",
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 
+
+
 [features]
 wsaa                    = ["dep:openssl", "dep:chrono", "dep:dashmap"]
 dummy_type              = []
 qr_make                 = ["dep:qrcode-generator","dep:base64"]
+utoipa                  = ["dep:utoipa"]
 
 wsfev1                  = []
 wsfev1_dummy            = ["wsfev1","dummy_type","dep:reqwest"]
-wsfev1_fe_cae_solicitar = ["wsfev1","wsaa", "dep:reqwest","dep:chrono","dep:dashmap"]
+wsfev1_fe_cae_solicitar = ["wsfev1","wsaa", "dep:reqwest"]
 
 wsfexv1                 = []
 wsfexv1_dummy           = ["wsfexv1","dummy_type","dep:reqwest"]

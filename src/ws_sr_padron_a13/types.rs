@@ -88,6 +88,7 @@ pub(crate) struct DomicilioParse {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Persona {
     pub nombre: Nombre,
     pub domicilio: Vec<Domicilio>,
@@ -101,6 +102,7 @@ pub struct Persona {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Domicilio {
     pub tipo_domicilio: TipoDomicilio,
     pub direccion: Direccion,
@@ -110,6 +112,7 @@ pub struct Domicilio {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Direccion {
     pub direccion: String,
     pub calle: Option<String>,
@@ -118,18 +121,21 @@ pub struct Direccion {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Provincia {
     pub id_provincia: i32,
     pub descripcion_provincia: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DatoAdicional {
     pub tipo_dato_adicional: String,
     pub dato_adicional: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Clave {
     pub id_persona: String,
     pub tipo_clave: TipoClave,
@@ -137,12 +143,14 @@ pub struct Clave {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Documento {
     pub numero_documento: String,
     pub tipo_documento: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ActividadPrincipal {
     pub id_actividad_principal: String,
     pub descripcion_actividad_principal: String,
@@ -150,6 +158,7 @@ pub struct ActividadPrincipal {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Nombre {
     pub nombre: Option<String>,
     pub apellido: Option<String>,
@@ -157,6 +166,7 @@ pub struct Nombre {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TipoPersona {
     Fisica,
     Juridica,
@@ -164,6 +174,7 @@ pub enum TipoPersona {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TipoClave {
     Cuit,
     Cuil,
@@ -172,6 +183,7 @@ pub enum TipoClave {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum EstadoClave {
     Activo,
     Inactivo,
@@ -179,6 +191,7 @@ pub enum EstadoClave {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TipoDomicilio {
     Fiscal,
     Legalreal,
@@ -322,7 +335,8 @@ impl From<&str> for TipoDomicilio {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PersonaCuitRetorno {
     pub parsed: Persona,
     pub answer_xml: String,

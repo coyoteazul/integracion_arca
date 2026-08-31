@@ -1,12 +1,13 @@
 use tracing::debug;
 
 use crate::{
-    tests::{init_tracing, test_cert_key_getter, test_token_map}, ws_sr_padron_a13::{get_by_cuit::get_by_cuit, get_by_dni::get_by_dni},
+    tests::{init_tracing, test_cert_key_getter, test_token_map},
+    ws_sr_padron_a13::{get_by_cuit::get_by_cuit, get_by_dni::get_by_dni},
 };
 
 #[tokio::test]
 async fn test_get_by_dni() {
-		init_tracing();
+    init_tracing();
 
     let token_map = test_token_map();
     let tenant_id = 1;
@@ -44,7 +45,7 @@ async fn test_get_by_dni() {
 
 #[tokio::test]
 async fn test_get_by_cuit() {
-		init_tracing();
+    init_tracing();
 
     let token_map = test_token_map();
     let tenant_id = 1;
