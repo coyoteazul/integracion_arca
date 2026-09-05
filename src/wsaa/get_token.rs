@@ -118,3 +118,35 @@ pub struct CertKeyPair {
     pub cert_contents: Vec<u8>,
     pub key_contents: Vec<u8>,
 }
+
+#[cfg(test)]
+impl TokenArca {
+    /// Solo para tests: reconstruye un token previamente cacheado (ej. en un archivo
+    /// temporal) sin llamar a WSAA de nuevo. En produccion el cache vive en memoria
+    /// (`token_map`) y dura todo el proceso; en tests cada corrida es un proceso nuevo,
+    /// y ARCA bloquea (`ns1:coe.alreadyAuthenticated`) renovaciones demasiado seguidas.
+    pub fn from_cache(cuit: i64, token: String, sign: String, expir: DateTime<Utc>) -> Self {
+        Self {
+            cuit,
+            token,
+            sign,
+            expir,
+        }
+    }
+
+    pub fn cuit(&self) -> i64 {
+        self.cuit
+    }
+
+    pub fn token(&self) -> &str {
+        &self.token
+    }
+
+    pub fn sign(&self) -> &str {
+        &self.sign
+    }
+
+    pub fn expir(&self) -> DateTime<Utc> {
+        self.expir
+    }
+}

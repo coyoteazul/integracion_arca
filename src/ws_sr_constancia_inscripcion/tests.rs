@@ -12,7 +12,7 @@ async fn dispara_test(cuit: i64) -> ConstanciaInscripcion {
     let tenant_id = 1;
     let es_prod = true;
     let req_cli = reqwest::Client::new();
-    let cert_key_getter = test_cert_key_getter;
+    let cert_key_getter = || test_cert_key_getter(es_prod);
 
     let res = get_by_cuit(
         token_map,

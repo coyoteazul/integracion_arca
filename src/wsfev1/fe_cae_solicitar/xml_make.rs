@@ -1,180 +1,12 @@
-use std::{sync::Arc, time::Duration};
-
-use chrono::NaiveDate;
-use reqwest::{
-    Client, RequestBuilder,
-    header::{ACCEPT_CHARSET, CONTENT_TYPE},
-};
-use tracing::{debug, error, info};
-
-use crate::{
-    types::{enums::Webservice, errors::ErrType},
-    wsaa::get_token::{CertKeyPair, ServiceId, TokenArca, get_token},
-    wsfev1::url::{WSFEV1_URL_HOMO, WSFEV1_URL_PROD},
+use super::types::{
+    ComprobAsoc, ComprobCabezal, ComprobCliente, ComprobIVA, ComprobOpcionales, ComprobTributos,
+    ComprobValores, Comprobante,
 };
 
-/// Genera el request completamente, incluyendo auth y contenido, pero no lo envia.
-/// De esta forma podes logear el contenido antes de enviarlo
-/// `cert_key_getter` Solo se llama si es necesario renovar el token
-pub async fn generar_request<Fc>(
-    token_map: Arc<dashmap::DashMap<ServiceId, TokenArca>>,
-    tenant_id: i64,
-    es_prod: bool,
-    req_cli: &Client,
-    comprobante: &Comprobante,
-    cert_key_getter: Fc,
-) -> Result<(RequestBuilder, String), ErrType>
-where
-    Fc: AsyncFnMut() -> Option<CertKeyPair>,
-{
-    info!(
-        id_factura = comprobante.id_factura,
-        punto_venta = comprobante.cabezal.punto_venta,
-        tenant_id,
-        es_prod,
-        "Generando request FECAESolicitar"
-    );
+/// Tipos de comprobante MiPyMEs (FCE): Factura/Debito/Credito para A, B y C (10040/10157).
+const MIPYME_TIPOS: [i64; 9] = [201, 202, 203, 206, 207, 208, 211, 212, 213];
 
-    let url = if es_prod {
-        WSFEV1_URL_PROD
-    } else {
-        WSFEV1_URL_HOMO
-    };
-    let key = ServiceId {
-        tenant_id,
-        webservice: Webservice::Wsfev1,
-    };
-    let auth_xml = get_token(
-        token_map,
-        key,
-        es_prod,
-        req_cli,
-        cert_key_getter,
-        token_parser,
-    )
-    .await
-    .inspect_err(|e| {
-        error!(
-            id_factura = comprobante.id_factura,
-            tenant_id,
-            error = ?e,
-            "Error obteniendo token para wsfev1"
-        )
-    })?;
-
-    let send_xml = xml_make(comprobante, auth_xml);
-    // No se loguea el XML completo porque incluye el Token/Sign de autenticacion.
-    debug!(
-        id_factura = comprobante.id_factura,
-        xml_len = send_xml.len(),
-        "Request XML de FECAESolicitar generado"
-    );
-
-    let req = req_cli
-        .post(url)
-        .header(CONTENT_TYPE, "application/soap+xml; charset=utf-8") //Hay que aclarar el charset porque arca miente y manda windows-1252 diciendo que es utf-8
-        .header(ACCEPT_CHARSET, "utf-8")
-        .body(send_xml.clone())
-        .timeout(Duration::from_secs(60));
-
-    return Ok((req, send_xml));
-}
-
-fn token_parser(cuit: i64, token: &str, sign: &str) -> String {
-    format!(
-        r#"<ar:Auth>
-	<ar:Token>{token}</ar:Token>
-	<ar:Sign>{sign}</ar:Sign>
-	<ar:Cuit>{cuit}</ar:Cuit>
-</ar:Auth>"#
-    )
-}
-
-#[derive(Debug)]
-pub struct Comprobante {
-    pub id_factura: i64,
-    pub cabezal: ComprobCabezal,
-    pub cliente: ComprobCliente,
-    pub valores: ComprobValores,
-
-    pub comprob_asociados: Option<Vec<ComprobAsoc>>,
-    pub periodo_asociado: Option<ComprobPeriodo>,
-    pub opcionales: Option<Vec<ComprobOpcionales>>,
-    pub actividades: Option<Vec<String>>,
-}
-
-#[derive(Debug)]
-pub struct ComprobCabezal {
-    pub punto_venta: i64,
-    pub num_documento: i64,
-    pub tipo_rg1415: i64,
-    ///1:Productos, 2:Servicios, 3:Ambos
-    pub concepto: i8,
-    pub fecha_emision: NaiveDate,
-    pub moneda: String,
-    pub cotizacion: f64,
-    pub cancela_misma_moneda: bool,
-    pub servicio_desde: Option<NaiveDate>,
-    pub servicio_hasta: Option<NaiveDate>,
-    pub venci_pago: Option<NaiveDate>,
-}
-
-#[derive(Debug)]
-pub struct ComprobCliente {
-    pub tipo_doc: i64,
-    pub documento: i64,
-    pub cond_iva: i64,
-}
-
-#[derive(Debug)]
-pub struct ComprobValores {
-    pub val_total: f64,
-    pub val_nogravado: f64,
-    pub val_gravado: f64,
-    pub val_exento: f64,
-    pub val_iva: f64,
-    pub val_otros_trib: f64,
-    pub tributos: Option<Vec<ComprobTributos>>,
-    pub alicuotas_iva: Option<Vec<ComprobIVA>>,
-}
-
-#[derive(Debug)]
-pub struct ComprobAsoc {
-    pub punto_venta: i64,
-    pub num_documento: i64,
-    pub tipo_rg1415: i64,
-    pub fecha_emision: NaiveDate,
-}
-
-#[derive(Debug)]
-pub struct ComprobTributos {
-    pub id_tributo: i64,
-    pub desc: String,
-    pub base: f64,
-    pub alicuota: f64,
-    pub importe: f64,
-}
-
-#[derive(Debug)]
-pub struct ComprobIVA {
-    pub id_alicuota: i64,
-    pub base: f64,
-    pub importe: f64,
-}
-
-#[derive(Debug)]
-pub struct ComprobPeriodo {
-    pub fecha_desde: NaiveDate,
-    pub fecha_hasta: NaiveDate,
-}
-
-#[derive(Debug)]
-pub struct ComprobOpcionales {
-    pub id: String,
-    pub valor: String,
-}
-
-fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
+pub(super) fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
     const COMP_TIPO_C: [i64; 3] = [11, 12, 13];
     let ComprobCabezal {
         punto_venta,
@@ -205,7 +37,6 @@ fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
         ref alicuotas_iva,
     } = &comp.valores;
     let fecha_emision = fecha_emision.format("%Y%m%d").to_string();
-    let cancela_misma_moneda = if *cancela_misma_moneda { 'S' } else { 'N' };
 
     if COMP_TIPO_C.contains(tipo_rg1415) {
         val_gravado = val_nogravado.clone();
@@ -252,8 +83,25 @@ fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
         String::new()
     };
 
-    let comp_asoc = cbte_asoc_xml(&comp.comprob_asociados);
-    let tribut = tributos_xml(&tributos);
+    // CanMisMonExt solo tiene sentido (y ARCA lo rechaza si se envia, cod. 10241) para
+    // comprobantes en moneda extranjera. Para PES no debe enviarse.
+    let cancela_moneda_ext = if moneda.as_str() != "PES" {
+        let flag = if *cancela_misma_moneda { 'S' } else { 'N' };
+        format!(r#"<ar:CanMisMonExt>{flag}</ar:CanMisMonExt>"#)
+    } else {
+        String::new()
+    };
+
+    // CbteAsoc.Cuit es obligatorio al asociar un comprobante MiPyMEs (FCE) debito/credito
+    // (10151/10122/10154/10155); en el resto de los casos no corresponde informarlo.
+    let cuit_asoc = if MIPYME_TIPOS.contains(&tipo_rg1415) {
+        Some(documento)
+    } else {
+        None
+    };
+
+    let comp_asoc = cbte_asoc_xml(&comp.comprob_asociados, cuit_asoc);
+    let tribut = tributos_xml(tributos);
     let iva = ivaalic_xml(alicuotas_iva);
     let opcion = opcion_xml(&comp.opcionales);
     let activid = actividades_xml(&comp.actividades);
@@ -275,7 +123,7 @@ fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
 		<ar:ImpIVA>{val_iva}</ar:ImpIVA>
 		<ar:MonId>{moneda}</ar:MonId>
 		<ar:MonCotiz>{cotizacion}</ar:MonCotiz>
-		<ar:CanMisMonExt>{cancela_misma_moneda}</ar:CanMisMonExt>
+		{cancela_moneda_ext}
 		<ar:CondicionIVAReceptorId>{cond_iva}</ar:CondicionIVAReceptorId>
 		{fecha_serv}
 		{fecha_venc}
@@ -305,37 +153,42 @@ fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
     )
 }
 
-fn cbte_asoc_xml(com: &Option<Vec<ComprobAsoc>>) -> String {
-    if let Some(asoc) = com {
-        if asoc.len() > 0 {
-            let ar = asoc
-                .iter()
-                .map(|f| {
-                    let ComprobAsoc {
-                        punto_venta,
-                        num_documento,
-                        tipo_rg1415,
-                        fecha_emision,
-                    } = &f;
-                    let fecha_emision = fecha_emision.format("%Y%m%d").to_string();
-                    format!(
-                        r#"
+fn cbte_asoc_xml(com: &Option<Vec<ComprobAsoc>>, cuit_asoc: Option<i64>) -> String {
+    let Some(asoc) = com else {
+        return String::new();
+    };
+    if asoc.is_empty() {
+        return String::new();
+    }
+
+    let cuit_tag = cuit_asoc
+        .map(|c| format!("<ar:Cuit>{c}</ar:Cuit>"))
+        .unwrap_or_default();
+
+    let ar: String = asoc
+        .iter()
+        .map(|f| {
+            let ComprobAsoc {
+                punto_venta,
+                num_documento,
+                tipo_rg1415,
+                fecha_emision,
+            } = &f;
+            let fecha_emision = fecha_emision.format("%Y%m%d").to_string();
+            format!(
+                r#"
 <ar:CbteAsoc>
 	<ar:Tipo>{tipo_rg1415}</ar:Tipo>
 	<ar:PtoVta>{punto_venta}</ar:PtoVta>
 	<ar:Nro>{num_documento}</ar:Nro>
+	{cuit_tag}
 	<ar:CbteFch>{fecha_emision}</ar:CbteFch>
 </ar:CbteAsoc>"#
-                    )
-                })
-                .reduce(|acc, val| acc + &val)
-                .unwrap();
+            )
+        })
+        .collect();
 
-            return format!(r#"<ar:CbtesAsoc>{ar}</ar:CbtesAsoc>"#);
-        }
-    };
-
-    String::new()
+    format!(r#"<ar:CbtesAsoc>{ar}</ar:CbtesAsoc>"#)
 }
 
 fn tributos_xml(trib: &Option<Vec<ComprobTributos>>) -> String {

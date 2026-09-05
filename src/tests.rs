@@ -14,9 +14,10 @@ pub fn test_token_map() -> Arc<dashmap::DashMap<ServiceId, TokenArca>> {
         .clone()
 }
 
-pub async fn test_cert_key_getter() -> Option<CertKeyPair> {
-    let cert_contents: Vec<u8> = fs::read("cert_test.pem").expect("error on handling cert file");
-    let key_contents: Vec<u8> = fs::read("key_test.key").expect("error on handling key file");
+pub async fn test_cert_key_getter(es_prod:bool) -> Option<CertKeyPair> {
+    let tipo_cert = if es_prod {"PROD"} else {"HOMO"};
+    let cert_contents: Vec<u8> = fs::read(&format!("cert_test_{}.pem", tipo_cert)).expect("error on handling cert file");
+    let key_contents: Vec<u8> = fs::read(&format!("key_test_{}.key", tipo_cert)).expect("error on handling key file");
     let cuit: i64 = 20398305923;
 
     Some(CertKeyPair {

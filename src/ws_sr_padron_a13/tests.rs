@@ -14,7 +14,7 @@ async fn test_get_by_dni() {
     let es_prod = true;
     let req_cli = reqwest::Client::new();
     let dni = 36602558;
-    let cert_key_getter = test_cert_key_getter;
+    let cert_key_getter = || test_cert_key_getter(es_prod);
 
     let res = get_by_dni(
         token_map,
@@ -52,7 +52,7 @@ async fn test_get_by_cuit() {
     let es_prod = true;
     let req_cli = reqwest::Client::new();
     let cuit = 30696155190;
-    let cert_key_getter = test_cert_key_getter;
+    let cert_key_getter = || test_cert_key_getter(es_prod);
 
     let res = get_by_cuit(
         token_map,

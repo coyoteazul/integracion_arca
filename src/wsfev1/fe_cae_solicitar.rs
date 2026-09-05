@@ -1,3 +1,6 @@
-pub mod generar_request;
-pub mod parse_response;
+pub mod fecae_solicitar;
 pub mod types;
+pub mod xml_make;
+
+#[cfg(test)]
+mod tests;
