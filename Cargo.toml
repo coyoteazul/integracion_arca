@@ -29,6 +29,7 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 [features]
 wsaa                    = ["dep:openssl", "dep:chrono", "dep:dashmap"]
 dummy_type              = []
+persona_type            = []
 qr_make                 = ["dep:qrcode-generator","dep:base64"]
 utoipa                  = ["dep:utoipa"]
 
@@ -53,6 +54,9 @@ wsbfev1_dummy           = ["wsbfev1","dummy_type","dep:reqwest"]
 
 ws-sr-padron-a13            = []
 ws-sr-padron-a13_dummy      = ["ws-sr-padron-a13","dep:reqwest","dummy_type"]
-ws-sr-padron-a13_get_by_cuit= ["ws-sr-padron-a13","dep:reqwest","wsaa"]
-ws-sr-padron-a13_get_by_dni = ["ws-sr-padron-a13","dep:reqwest","ws-sr-padron-a13_get_by_cuit"]
+ws-sr-padron-a13_get_by_cuit= ["ws-sr-padron-a13","dep:reqwest","wsaa", "persona_type"]
+ws-sr-padron-a13_get_by_dni = ["ws-sr-padron-a13","dep:reqwest","ws-sr-padron-a13_get_by_cuit", "persona_type"]
 
+ws_sr_constancia_inscripcion             = []
+ws_sr_constancia_inscripcion_dummy       = ["ws_sr_constancia_inscripcion","dep:reqwest","dummy_type"]
+ws_sr_constancia_inscripcion_get_by_cuit = ["ws_sr_constancia_inscripcion","dep:reqwest","wsaa", "persona_type"]

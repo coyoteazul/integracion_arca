@@ -3,6 +3,8 @@ mod crypto;
 
 pub mod types;
 
+#[cfg(feature = "ws_sr_constancia_inscripcion")]
+pub mod ws_sr_constancia_inscripcion;
 #[cfg(feature = "ws-sr-padron-a13")]
 pub mod ws_sr_padron_a13;
 #[cfg(feature = "wsbfev1")]

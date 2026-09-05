@@ -7,3 +7,6 @@ pub mod errors;
 mod dummy_result;
 #[cfg(feature = "dummy_type")]
 pub use dummy_result::FEDummyResult;
+
+#[cfg(feature = "persona_type")]
+pub mod personas;

@@ -1,6 +1,10 @@
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
+use crate::types::personas::{
+    Clave, DatoAdicional, Direccion, Documento, Domicilio, Nombre, Provincia, TipoPersona,
+};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct PersonaParse {
     #[serde(rename = "idPersona")]
@@ -103,99 +107,10 @@ pub struct Persona {
 
 #[derive(Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Domicilio {
-    pub tipo_domicilio: TipoDomicilio,
-    pub direccion: Direccion,
-    pub localidad: String,
-    pub provincia: Provincia,
-    pub datos_adicionales: Vec<DatoAdicional>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Direccion {
-    pub direccion: String,
-    pub calle: Option<String>,
-    pub numero: Option<String>,
-    pub codigo_postal: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Provincia {
-    pub id_provincia: i32,
-    pub descripcion_provincia: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct DatoAdicional {
-    pub tipo_dato_adicional: String,
-    pub dato_adicional: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Clave {
-    pub id_persona: String,
-    pub tipo_clave: TipoClave,
-    pub estado_clave: EstadoClave,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Documento {
-    pub numero_documento: String,
-    pub tipo_documento: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ActividadPrincipal {
     pub id_actividad_principal: String,
     pub descripcion_actividad_principal: String,
     pub periodo_actividad_principal: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Nombre {
-    pub nombre: Option<String>,
-    pub apellido: Option<String>,
-    pub razon_social: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum TipoPersona {
-    Fisica,
-    Juridica,
-    Desconocida,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum TipoClave {
-    Cuit,
-    Cuil,
-    Cdi,
-    Desconocida,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum EstadoClave {
-    Activo,
-    Inactivo,
-    Desconocido,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Copy, Clone)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum TipoDomicilio {
-    Fiscal,
-    Legalreal,
-    Desconocido,
 }
 
 impl From<PersonaParse> for Persona {
@@ -224,7 +139,7 @@ impl From<PersonaParse> for Persona {
                 if tipo_persona == TipoPersona::Fisica {
                     return "Persona Fisica".to_owned();
                 }
-                "".to_owned()
+                "Desconocido".to_owned()
             }),
 
             clave: Clave {
@@ -290,47 +205,6 @@ impl From<DomicilioParse> for Domicilio {
                 }],
                 _ => Vec::new(),
             },
-        }
-    }
-}
-
-impl From<Option<&str>> for TipoPersona {
-    fn from(value: Option<&str>) -> Self {
-        match value {
-            Some("FISICA") => Self::Fisica,
-            Some("JURIDICA") => Self::Juridica,
-            _ => Self::Desconocida,
-        }
-    }
-}
-
-impl From<Option<&str>> for TipoClave {
-    fn from(value: Option<&str>) -> Self {
-        match value {
-            Some("CUIT") => Self::Cuit,
-            Some("CUIL") => Self::Cuil,
-            Some("CDI") => Self::Cdi,
-            _ => Self::Desconocida,
-        }
-    }
-}
-
-impl From<Option<&str>> for EstadoClave {
-    fn from(value: Option<&str>) -> Self {
-        match value {
-            Some("ACTIVO") => Self::Activo,
-            Some("INACTIVO") => Self::Inactivo,
-            _ => Self::Desconocido,
-        }
-    }
-}
-
-impl From<&str> for TipoDomicilio {
-    fn from(value: &str) -> Self {
-        match value {
-            "FISCAL" => Self::Fiscal,
-            "LEGAL/REAL" => Self::Legalreal,
-            _ => Self::Desconocido,
         }
     }
 }

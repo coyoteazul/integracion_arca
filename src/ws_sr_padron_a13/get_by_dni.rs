@@ -77,8 +77,12 @@ where
     debug!(dni, respuesta = %text, "Respuesta de getIdPersonaListByDocumento");
 
     if text.contains("<soap:Fault>") {
-        error!(dni, "getIdPersonaListByDocumento devolvio un SOAP Fault");
-        return Err(SoapFault::from_xml(&text).into());
+        if text.contains("No existe persona con ese documento") {
+            return Ok(vec![]);
+        } else {
+            error!(dni, "getIdPersonaListByDocumento devolvio un SOAP Fault");
+            return Err(SoapFault::from_xml(&text).into());
+        }
     }
 
     let list = get_xml_vec(&text, "idPersona")
