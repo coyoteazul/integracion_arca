@@ -93,7 +93,7 @@ fn persist_token_cache(token_map: &dashmap::DashMap<ServiceId, TokenArca>, tenan
 async fn test_fecae_solicitar_aprobado() {
     init_tracing();
 
-    let tenant_id = 1; // TODO: tu tenant_id de homologacion
+    let tenant_id = 1;
     let es_prod = false;
     let req_cli = reqwest::Client::new();
     let token_map = test_token_map_with_cache(tenant_id);
@@ -102,8 +102,8 @@ async fn test_fecae_solicitar_aprobado() {
     let comprobante = Comprobante {
         id_factura: 1,
         cabezal: ComprobCabezal {
-            punto_venta: 1,   // TODO
-            num_documento: 1, // TODO: siguiente numero disponible para ese pto_vta/tipo
+            punto_venta: 1,   
+            num_documento: 1, 
             tipo_rg1415: 11,  // Factura C
             concepto: Servicios,
             fecha_emision: chrono::Utc::now().date_naive(),
@@ -165,7 +165,7 @@ async fn test_fecae_solicitar_aprobado() {
 async fn test_fecae_solicitar_pes_no_envia_can_mis_mon_ext() {
     init_tracing();
 
-    let tenant_id = 1; // TODO
+    let tenant_id = 1; 
     let es_prod = false;
     let req_cli = reqwest::Client::new();
     let token_map = test_token_map_with_cache(tenant_id);
@@ -174,8 +174,8 @@ async fn test_fecae_solicitar_pes_no_envia_can_mis_mon_ext() {
     let comprobante = Comprobante {
         id_factura: 2,
         cabezal: ComprobCabezal {
-            punto_venta: 1,   // TODO
-            num_documento: 2, // TODO
+            punto_venta: 1,   
+            num_documento: 2, 
             tipo_rg1415: 11,
             concepto: Servicios,
             fecha_emision: chrono::Utc::now().date_naive(),

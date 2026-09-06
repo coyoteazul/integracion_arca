@@ -73,14 +73,14 @@ fn persist_token_cache(token_map: &dashmap::DashMap<ServiceId, TokenArca>, tenan
 async fn test_fecomp_ultimo_autorizado() {
     init_tracing();
 
-    let tenant_id = 1; // TODO: tu tenant_id de homologacion
+    let tenant_id = 1;
     let es_prod = false;
     let req_cli = reqwest::Client::new();
     let token_map = test_token_map_with_cache(tenant_id);
     let cert_key_getter = || test_cert_key_getter(es_prod);
 
-    let pto_vta = 1; // TODO
-    let cbte_tipo = 11; // TODO: el tipo que estabas probando (Factura C)
+    let pto_vta = 1;
+    let cbte_tipo = 11; // Factura C
 
     let res = fecomp_ultimo_autorizado(
         token_map.clone(),
