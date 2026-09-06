@@ -134,9 +134,9 @@ pub(crate) struct FecaeResponseParse {
     pub cab: Option<FeCabRespParse>,
     #[serde(rename = "FeDetResp", default)]
     pub det: FeDetRespWrapper,
-    #[serde(default)]
+    #[serde(rename = "Events", default)]
     pub events: Option<EventsWrapper>,
-    #[serde(default)]
+    #[serde(rename = "Errors", default)]
     pub errors: Option<ErrorsWrapper>,
 }
 

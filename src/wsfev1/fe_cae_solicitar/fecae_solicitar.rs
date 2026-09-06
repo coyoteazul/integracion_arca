@@ -96,6 +96,12 @@ where
         |e| error!(id_factura = comprobante.id_factura, error = ?e, "Error leyendo el cuerpo de la respuesta de FECAESolicitar"),
     )?;
 
+		debug!(
+        id_factura = comprobante.id_factura,
+        ?received_xml,
+        "Request XML de FECAESolicitar recibido"
+    );
+
     let resultado = parse_response(&received_xml, comprobante.id_factura)?;
 
     Ok(FecaeRetorno {
@@ -137,6 +143,12 @@ fn parse_response(
         err.to_string()
     })?;
 
+		debug!(
+        id_factura,
+        ?parsed,
+        "Request XML de FECAESolicitar parseado"
+    );
+
     let to_obs = |c: CodeMsgParse| Wsfev1Obs {
         code: c.code.map(|x| x.to_string()).unwrap_or_default(),
         msg: c.msg.unwrap_or_default(),
@@ -161,13 +173,15 @@ fn parse_response(
 
     obs.extend(det.observaciones.items.into_iter().map(to_obs));
 
+		obs.extend(parsed.events.map_or(vec![], |e| e.items.into_iter().map(to_obs).collect()));
+
     if !obs.is_empty() {
         warn!(
             id_factura,
             ?obs,
-            "Observaciones/Errores encontrados en la respuesta"
+            "Observaciones/Eventos/Errores encontrados en la respuesta"
         );
-    }
+    }		
 
     // Usamos el Resultado del detalle (no el de FeCabResp): con CantReg=1 siempre
     // deberian coincidir, pero el del detalle es el que corresponde semanticamente
