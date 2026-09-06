@@ -3,6 +3,9 @@ mod url;
 #[cfg(feature = "wsfev1_fe_cae_solicitar")]
 pub mod fe_cae_solicitar;
 
+#[cfg(feature = "wsfev1_fe_comp_ultimo_autorizado")]
+pub mod fe_comp_ultimo_autorizado;
+
 #[cfg(feature = "wsfev1_dummy")]
 mod service_status;
 #[cfg(feature = "wsfev1_dummy")]

@@ -33,9 +33,10 @@ persona_type            = []
 qr_make                 = ["dep:qrcode-generator","dep:base64"]
 utoipa                  = ["dep:utoipa"]
 
-wsfev1                  = []
-wsfev1_dummy            = ["wsfev1","dummy_type","dep:reqwest"]
-wsfev1_fe_cae_solicitar = ["wsfev1","wsaa", "dep:reqwest"]
+wsfev1                           = []
+wsfev1_dummy                     = ["wsfev1","dummy_type","dep:reqwest"]
+wsfev1_fe_cae_solicitar          = ["wsfev1","wsaa", "dep:reqwest"]
+wsfev1_fe_comp_ultimo_autorizado = ["wsfev1","wsaa", "dep:reqwest"]
 
 wsfexv1                 = []
 wsfexv1_dummy           = ["wsfexv1","dummy_type","dep:reqwest"]
