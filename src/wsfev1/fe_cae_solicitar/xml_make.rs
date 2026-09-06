@@ -3,11 +3,7 @@ use super::types::{
     ComprobValores, Comprobante,
 };
 
-/// Tipos de comprobante MiPyMEs (FCE): Factura/Debito/Credito para A, B y C (10040/10157).
-const MIPYME_TIPOS: [i64; 9] = [201, 202, 203, 206, 207, 208, 211, 212, 213];
-
 pub(super) fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
-    const COMP_TIPO_C: [i64; 3] = [11, 12, 13];
 
     let ComprobCabezal {
         punto_venta,
@@ -42,7 +38,7 @@ pub(super) fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
 
     let fecha_emision = fecha_emision.format("%Y%m%d").to_string();
 
-    if COMP_TIPO_C.contains(tipo_rg1415) {
+    if tipo_rg1415.get_info().letra == 'C' {
         val_gravado = val_nogravado.clone();
         val_nogravado = 0.0;
     }
@@ -103,7 +99,7 @@ pub(super) fn xml_make(comp: &Comprobante, auth_xml: String) -> String {
     // CbteAsoc.Cuit es obligatorio al asociar un comprobante MiPyMEs (FCE)
     // debito/credito (10151/10122/10154/10155); en el resto de los casos
     // no corresponde informarlo.
-    let cuit_asoc = if MIPYME_TIPOS.contains(&tipo_rg1415) {
+    let cuit_asoc = if tipo_rg1415.get_info().es_pyme {
         Some(documento)
     } else {
         None

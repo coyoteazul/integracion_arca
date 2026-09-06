@@ -1,11 +1,14 @@
 use std::fmt;
 
 use chrono::NaiveDate;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+use crate::types::tipo_rg1415::TipoRG1415;
 
 // ---------- tipos publicos: request ----------
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Comprobante {
     pub id_factura: i64,
     pub cabezal: ComprobCabezal,
@@ -18,11 +21,12 @@ pub struct Comprobante {
     pub actividades: Option<Vec<String>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobCabezal {
     pub punto_venta: i64,
     pub num_documento: i64,
-    pub tipo_rg1415: i64,
+    pub tipo_rg1415: TipoRG1415,
     ///1:Productos, 2:Servicios, 3:Ambos
     pub concepto: TipoVenta,
     pub fecha_emision: NaiveDate,
@@ -34,14 +38,16 @@ pub struct ComprobCabezal {
     pub venci_pago: Option<NaiveDate>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobCliente {
     pub tipo_doc: i64,
     pub documento: i64,
     pub cond_iva: i64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobValores {
     pub val_total: f64,
     pub val_nogravado: f64,
@@ -53,15 +59,17 @@ pub struct ComprobValores {
     pub alicuotas_iva: Option<Vec<ComprobIVA>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobAsoc {
     pub punto_venta: i64,
     pub num_documento: i64,
-    pub tipo_rg1415: i64,
+    pub tipo_rg1415: TipoRG1415,
     pub fecha_emision: NaiveDate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobTributos {
     pub id_tributo: i64,
     pub desc: String,
@@ -70,20 +78,23 @@ pub struct ComprobTributos {
     pub importe: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobIVA {
     pub id_alicuota: i64,
     pub base: f64,
     pub importe: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobPeriodo {
     pub fecha_desde: NaiveDate,
     pub fecha_hasta: NaiveDate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComprobOpcionales {
     pub id: String,
     pub valor: String,
@@ -93,7 +104,7 @@ pub struct ComprobOpcionales {
 
 /// Resultado completo de un pedido de CAE: el resultado de negocio (aprobado/rechazado),
 /// mas el XML enviado (sin datos de Auth) y el XML crudo recibido, para diagnostico/logging.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FecaeRetorno {
     pub resultado: Result<Wsfev1Ok, Wsfev1Rechazo>,
     /// El request enviado a ARCA, con el bloque <ar:Auth> reemplazado por un comentario.
@@ -101,7 +112,7 @@ pub struct FecaeRetorno {
     pub received_xml: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Wsfev1Ok {
     pub cae: String,
     pub vcto: NaiveDate,
@@ -110,12 +121,13 @@ pub struct Wsfev1Ok {
 
 /// Rechazo de negocio (Resultado = "R"). No es un error de transporte ni un SOAP Fault:
 /// ARCA proceso el pedido correctamente y decidio no otorgar el CAE.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Wsfev1Rechazo {
     pub obs: Vec<Wsfev1Obs>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Wsfev1Obs {
     pub code: String,
     pub msg: String,
@@ -213,11 +225,23 @@ pub(crate) struct CodeMsgParse {
     pub msg: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TipoVenta {
     Productos = 1,
     Servicios = 2,
     Ambos = 3,
+}
+
+impl From<i8> for TipoVenta {
+		fn from(value: i8) -> Self {
+				match value {
+						1 => TipoVenta::Productos,
+						2 => TipoVenta::Servicios,
+						3 => TipoVenta::Ambos,
+						_ => TipoVenta::Productos, // default
+				}
+		}
 }
 
 impl fmt::Display for TipoVenta {

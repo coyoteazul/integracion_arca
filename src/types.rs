@@ -10,3 +10,6 @@ pub use dummy_result::FEDummyResult;
 
 #[cfg(feature = "persona_type")]
 pub mod personas;
+
+#[cfg(feature = "tipo_rg1415")]
+pub mod tipo_rg1415;

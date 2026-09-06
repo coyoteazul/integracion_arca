@@ -6,7 +6,10 @@ use tracing::debug;
 
 use crate::{
     tests::{init_tracing, test_cert_key_getter},
-    types::enums::Webservice,
+    types::{
+        enums::Webservice,
+        tipo_rg1415::TipoRG1415::{self, FcC011},
+    },
     wsaa::get_token::{ServiceId, TokenArca},
     wsfev1::fe_cae_solicitar::{
         fecae_solicitar::fecae_solicitar,
@@ -102,9 +105,9 @@ async fn test_fecae_solicitar_aprobado() {
     let comprobante = Comprobante {
         id_factura: 1,
         cabezal: ComprobCabezal {
-            punto_venta: 1,   
-            num_documento: 1, 
-            tipo_rg1415: 11,  // Factura C
+            punto_venta: 1,
+            num_documento: 1,
+            tipo_rg1415: TipoRG1415::FcC011,
             concepto: Servicios,
             fecha_emision: chrono::Utc::now().date_naive(),
             moneda: "PES".to_owned(),
@@ -165,7 +168,7 @@ async fn test_fecae_solicitar_aprobado() {
 async fn test_fecae_solicitar_pes_no_envia_can_mis_mon_ext() {
     init_tracing();
 
-    let tenant_id = 1; 
+    let tenant_id = 1;
     let es_prod = false;
     let req_cli = reqwest::Client::new();
     let token_map = test_token_map_with_cache(tenant_id);
@@ -174,9 +177,9 @@ async fn test_fecae_solicitar_pes_no_envia_can_mis_mon_ext() {
     let comprobante = Comprobante {
         id_factura: 2,
         cabezal: ComprobCabezal {
-            punto_venta: 1,   
-            num_documento: 2, 
-            tipo_rg1415: 11,
+            punto_venta: 1,
+            num_documento: 2,
+            tipo_rg1415: FcC011,
             concepto: Servicios,
             fecha_emision: chrono::Utc::now().date_naive(),
             moneda: "PES".to_owned(),
